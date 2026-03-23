@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-sdk-investigation-spike/01-01-PLAN.md
-last_updated: "2026-03-23T23:41:41.913Z"
+stopped_at: Completed 01-sdk-investigation-spike/01-02-PLAN.md
+last_updated: "2026-03-23T23:49:58.000Z"
 last_activity: 2026-03-22 -- Roadmap created
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -51,6 +51,7 @@ Progress: [..........] 0%
 
 *Updated after each plan completion*
 | Phase 01-sdk-investigation-spike P01 | 4 | 2 tasks | 9 files |
+| Phase 01-sdk-investigation-spike P02 | 6 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [Phase 01-sdk-investigation-spike]: Use package:web (not dart:html/dart:js) for all JS interop in spike -- Dart 3.7 deprecates dart:html
 - [Phase 01-sdk-investigation-spike]: Spike is standalone Flutter Web project separate from plugin lib/ to isolate investigation from production code
 - [Phase 01-sdk-investigation-spike]: Integration test stubs use permissive assertions initially; Plan 02 will tighten to Key('vlibras-player-view') once HtmlElementView is implemented
+- [Phase 01-sdk-investigation-spike]: dart:js_interop_unsafe required for callAsConstructor — not in dart:js_interop itself
+- [Phase 01-sdk-investigation-spike]: HtmlElementView.fromTagName('div') is primary VLibras embedding approach; WebGL conflict TBD via manual browser run
+- [Phase 01-sdk-investigation-spike]: Synchronous CDN script load in index.html avoids async race conditions for spike
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:41:41.909Z
-Stopped at: Completed 01-sdk-investigation-spike/01-01-PLAN.md
+Last session: 2026-03-23T23:49:57.996Z
+Stopped at: Completed 01-sdk-investigation-spike/01-02-PLAN.md
 Resume file: None

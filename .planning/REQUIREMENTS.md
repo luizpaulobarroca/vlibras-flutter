@@ -58,27 +58,25 @@ Deferidos — não no roadmap atual.
 
 ## Traceability
 
-Populado durante criação do roadmap.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | — | Pending |
-| CORE-02 | — | Pending |
-| CORE-03 | — | Pending |
-| CORE-04 | — | Pending |
-| WEB-01 | — | Pending |
-| WEB-02 | — | Pending |
-| ERR-01 | — | Pending |
-| PUB-01 | — | Pending |
-| PUB-02 | — | Pending |
-| PUB-03 | — | Pending |
-| PUB-04 | — | Pending |
+| CORE-01 | Phase 2: Core Dart API | Pending |
+| CORE-02 | Phase 3: Web Platform Integration | Pending |
+| CORE-03 | Phase 2: Core Dart API | Pending |
+| CORE-04 | Phase 2: Core Dart API | Pending |
+| WEB-01 | Phase 3: Web Platform Integration | Pending |
+| WEB-02 | Phase 3: Web Platform Integration | Pending |
+| ERR-01 | Phase 2: Core Dart API | Pending |
+| PUB-01 | Phase 4: Publication Readiness | Pending |
+| PUB-02 | Phase 4: Publication Readiness | Pending |
+| PUB-03 | Phase 4: Publication Readiness | Pending |
+| PUB-04 | Phase 4: Publication Readiness | Pending |
 
 **Coverage:**
 - v1 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11 ⚠️
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*

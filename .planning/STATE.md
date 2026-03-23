@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
+stopped_at: Completed 01-sdk-investigation-spike/01-01-PLAN.md
+last_updated: "2026-03-23T23:41:41.913Z"
+last_activity: 2026-03-22 -- Roadmap created
+progress:
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 0
+---
+
 # Project State
 
 ## Project Reference
@@ -34,6 +50,7 @@ Progress: [..........] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-sdk-investigation-spike P01 | 4 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -45,6 +62,9 @@ Recent decisions affecting current work:
 - [Roadmap]: v1 scope is Web-only; Android/iOS deferred to v2
 - [Roadmap]: Plugin simples (non-federated), Controller+Widget pattern
 - [Roadmap]: SDK investigation spike first to retire critical embedding risk
+- [Phase 01-sdk-investigation-spike]: Use package:web (not dart:html/dart:js) for all JS interop in spike -- Dart 3.7 deprecates dart:html
+- [Phase 01-sdk-investigation-spike]: Spike is standalone Flutter Web project separate from plugin lib/ to isolate investigation from production code
+- [Phase 01-sdk-investigation-spike]: Integration test stubs use permissive assertions initially; Plan 02 will tighten to Key('vlibras-player-view') once HtmlElementView is implemented
 
 ### Pending Todos
 
@@ -57,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22
-Stopped at: Roadmap created, ready to plan Phase 1
+Last session: 2026-03-23T23:41:41.909Z
+Stopped at: Completed 01-sdk-investigation-spike/01-01-PLAN.md
 Resume file: None

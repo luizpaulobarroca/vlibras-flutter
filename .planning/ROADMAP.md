@@ -27,7 +27,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. A minimal Flutter Web app displays the VLibras 3D avatar inside a HtmlElementView (not in a separate browser tab/iframe)
   2. Calling a JS function from Dart triggers a visible LIBRAS translation animation on the avatar
   3. A written document lists the exact JS API calls needed (init, translate, state events), the CDN/script URLs, and any CSP/CORS requirements discovered
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Create spike Flutter Web scaffold, integration test stubs, and research directory
+- [ ] 01-02-PLAN.md — Implement VLibras player embedding (HtmlElementView + dart:js_interop) and translate UI
+- [ ] 01-03-PLAN.md — Write phase-01-findings.md from spike results and human-verify avatar animation
 
 ### Phase 2: Core Dart API
 **Goal**: Developers can instantiate a VLibrasController, observe its state through VLibrasValue, and the entire Dart API compiles and is testable against a mock platform -- without requiring a running web player
@@ -70,7 +75,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. SDK Investigation Spike | 0/? | Not started | - |
+| 1. SDK Investigation Spike | 0/3 | Not started | - |
 | 2. Core Dart API | 0/? | Not started | - |
 | 3. Web Platform Integration | 0/? | Not started | - |
 | 4. Publication Readiness | 0/? | Not started | - |

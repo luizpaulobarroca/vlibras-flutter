@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'vlibras_value.dart';
 import 'vlibras_platform.dart';
+import 'platform/unsupported_platform.dart'
+    if (dart.library.js_interop) 'platform/web_platform.dart';
 
 /// Controller for VLibras translation lifecycle.
 ///
@@ -9,11 +11,15 @@ import 'vlibras_platform.dart';
 ///
 /// Usage:
 /// ```dart
-/// final controller = VLibrasController(platform: myPlatform);
+/// final controller = VLibrasController();
 /// await controller.initialize();
 /// await controller.translate('Olá mundo');
 /// controller.dispose();
 /// ```
+///
+/// On Flutter Web, calling [VLibrasController()] (no platform argument)
+/// automatically selects [VLibrasWebPlatform] via conditional import.
+/// On non-web platforms, the default constructor throws [UnsupportedError].
 ///
 /// The [playing] state is a reachable enum value. In Phase 2, the controller
 /// does not transition to [VLibrasStatus.playing] autonomously — Phase 3 will
@@ -23,19 +29,13 @@ class VLibrasController extends ChangeNotifier
   /// Creates a [VLibrasController].
   ///
   /// Pass a [platform] to inject a custom implementation (useful for testing).
-  /// If omitted, a real [VLibrasPlatform] is expected to be registered in
-  /// Phase 3. Until then, the default throws [UnimplementedError].
-  VLibrasController({VLibrasPlatform? platform})
-      : _platform = platform ?? _defaultPlatform();
-
-  static VLibrasPlatform _defaultPlatform() {
-    throw UnimplementedError(
-      'No VLibrasPlatform implementation available. '
-      'VLibrasWebPlatform will be registered in Phase 3.',
-    );
+  /// If omitted on Flutter Web, [VLibrasWebPlatform] is used automatically.
+  /// If omitted on non-web platforms, [UnsupportedError] is thrown.
+  VLibrasController({VLibrasPlatform? platform}) {
+    _platform = platform ?? createDefaultPlatform(_onPlatformStatus);
   }
 
-  final VLibrasPlatform _platform;
+  late final VLibrasPlatform _platform;
   VLibrasValue _value = const VLibrasValue();
 
   @override
@@ -46,6 +46,11 @@ class VLibrasController extends ChangeNotifier
     if (_value == newValue) return;
     _value = newValue;
     notifyListeners();
+  }
+
+  /// Forwards platform status callbacks to the controller's value.
+  void _onPlatformStatus(VLibrasStatus status) {
+    _setValue(_value.copyWith(status: status));
   }
 
   /// Initializes the underlying VLibras platform.
@@ -97,6 +102,20 @@ class VLibrasController extends ChangeNotifier
         error: 'Falha ao traduzir: $e',
       ));
     }
+  }
+
+  /// Called by [VLibrasView] to attach the DOM element to the platform.
+  ///
+  /// Only called on Flutter Web. The [element] is the HTMLDivElement created
+  /// by HtmlElementView.fromTagName. Delegating to the platform allows
+  /// VLibrasWebPlatform to call player.load(element).
+  ///
+  /// Using `as dynamic` avoids importing web-only types in this file.
+  /// The cast is safe — this method is only called from VLibrasView on web
+  /// where VLibrasWebPlatform is the concrete type.
+  void attachElement(Object element) {
+    // ignore: avoid_dynamic_calls
+    (_platform as dynamic).attachToElement(element);
   }
 
   // Phase 3 will add pause(), stop(), resume(), repeat(), setSpeed() by

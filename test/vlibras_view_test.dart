@@ -1,6 +1,7 @@
 @TestOn('browser')
 library;
 
+import 'package:flutter/widgets.dart' show Key;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vlibras_flutter/vlibras_flutter.dart';
 import 'package:mocktail/mocktail.dart';

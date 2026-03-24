@@ -49,7 +49,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Create plugin scaffold, data types (VLibrasValue + VLibrasStatus), VLibrasPlatform interface, and test stubs
-- [ ] 02-02-PLAN.md — Implement VLibrasController state machine and activate full test suite
+- [x] 02-02-PLAN.md — Implement VLibrasController state machine and activate full test suite
 
 ### Phase 3: Web Platform Integration
 **Goal**: A Flutter Web app can display the VLibras avatar and translate text to LIBRAS end-to-end -- the core value proposition works for real
@@ -60,7 +60,12 @@ Plans:
   2. Calling controller.translate("Ola mundo") causes the avatar to animate the LIBRAS signs visibly on screen
   3. Controller state transitions from idle -> loading -> playing -> idle are observable during a translate call
   4. If the web player fails to load or translate, VLibrasValue.error contains a meaningful error description
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Create vlibras_js.dart bindings, VLibrasWebPlatform (Completer/Timer bridge), platform factory stubs, and unit tests
+- [ ] 03-02-PLAN.md — Implement VLibrasView (HtmlElementView widget), wire VLibrasController conditional import and attachElement(), update barrel export
+- [ ] 03-03-PLAN.md — Commit vlibras.js asset to web/vlibras/ and human-verify end-to-end avatar rendering and translation
 
 ### Phase 4: Publication Readiness
 **Goal**: The plugin meets all pub.dev publication requirements and a new developer can install, understand, and use the plugin from its pub.dev listing alone
@@ -83,5 +88,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
 | 2. Core Dart API | 2/2 | Complete   | 2026-03-24 |
-| 3. Web Platform Integration | 0/? | Not started | - |
+| 3. Web Platform Integration | 0/3 | Not started | - |
 | 4. Publication Readiness | 0/? | Not started | - |

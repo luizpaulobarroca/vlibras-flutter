@@ -12,7 +12,7 @@ This roadmap delivers a Flutter Web plugin that translates Portuguese text to LI
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: SDK Investigation Spike** - Verify VLibras web player can be embedded in Flutter Web and document its JS API
+- [x] **Phase 1: SDK Investigation Spike** - Verify VLibras web player can be embedded in Flutter Web and document its JS API
 - [ ] **Phase 2: Core Dart API** - Build the Controller+Value+PlatformInterface architecture with full state machine, testable with mocks
 - [ ] **Phase 3: Web Platform Integration** - Embed VLibras web player via HtmlElementView and deliver end-to-end translate flow
 - [ ] **Phase 4: Publication Readiness** - Example app, dartdoc, README, tests, and pana score for pub.dev publication
@@ -30,9 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Create spike Flutter Web scaffold, integration test stubs, and research directory
-- [ ] 01-02-PLAN.md — Implement VLibras player embedding (HtmlElementView + dart:js_interop) and translate UI
-- [ ] 01-03-PLAN.md — Write phase-01-findings.md from spike results and human-verify avatar animation
+- [x] 01-01-PLAN.md — Create spike Flutter Web scaffold, integration test stubs, and research directory
+- [x] 01-02-PLAN.md — Implement VLibras player embedding (HtmlElementView + dart:js_interop) and translate UI
+- [x] 01-03-PLAN.md — Write phase-01-findings.md from spike results and human-verify avatar animation
+
+**Phase 1 outcome:** SC-1 FAIL / SC-2 FAIL — window.VLibras.Player not in CDN bundle. vlibras-plugin.js exports only VLibras.Widget. Phase 1 successfully identified the correct HtmlElementView architecture and documented the correct JS API (from vlibras-player-webjs source). Phase 3 path decision required: Widget (CDN) vs. self-hosted standalone Player. See: .planning/research/phase-01-findings.md
 
 ### Phase 2: Core Dart API
 **Goal**: Developers can instantiate a VLibrasController, observe its state through VLibrasValue, and the entire Dart API compiles and is testable against a mock platform -- without requiring a running web player
@@ -75,7 +77,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. SDK Investigation Spike | 2/3 | In Progress|  |
+| 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
 | 2. Core Dart API | 0/? | Not started | - |
 | 3. Web Platform Integration | 0/? | Not started | - |
 | 4. Publication Readiness | 0/? | Not started | - |

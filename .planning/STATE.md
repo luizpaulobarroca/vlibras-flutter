@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-sdk-investigation-spike/01-02-PLAN.md
-last_updated: "2026-03-23T23:49:58.000Z"
-last_activity: 2026-03-22 -- Roadmap created
+stopped_at: Completed 01-sdk-investigation-spike/01-03-PLAN.md
+last_updated: "2026-03-24T02:45:00.000Z"
+last_activity: 2026-03-24 -- Phase 1 Plan 3 complete (findings document with empirical SC results)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 0
+  completed_plans: 3
+  percent: 25
 ---
 
 # Project State
@@ -21,37 +21,38 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Um desenvolvedor Flutter consegue exibir traducao de texto para LIBRAS em qualquer plataforma com um unico Controller e Widget, sem precisar lidar com os SDKs nativos diretamente.
-**Current focus:** Phase 1 - SDK Investigation Spike
+**Current focus:** Phase 2 - State Machine Design (or Phase 3 path decision)
 
 ## Current Position
 
-Phase: 1 of 4 (SDK Investigation Spike)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-22 -- Roadmap created
+Phase: 1 of 4 (SDK Investigation Spike) — COMPLETE
+Plan: 3 of 3 in current phase — COMPLETE
+Status: Phase 1 complete; ready to begin Phase 2
+Last activity: 2026-03-24 -- Phase 1 Plan 3 complete (findings document with empirical SC results)
 
-Progress: [..........] 0%
+Progress: [###.......] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 3
+- Average duration: ~20 min
+- Total execution time: ~1 hour
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-sdk-investigation-spike | 3 | ~60 min | ~20 min |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: P01 (4min/9files), P02 (6min/4files), P03 (45min/1file)
+- Trend: Stable
 
 *Updated after each plan completion*
 | Phase 01-sdk-investigation-spike P01 | 4 | 2 tasks | 9 files |
 | Phase 01-sdk-investigation-spike P02 | 6 | 2 tasks | 4 files |
+| Phase 01-sdk-investigation-spike P03 | 45 | 2 tasks | 1 file |
 
 ## Accumulated Context
 
@@ -69,18 +70,22 @@ Recent decisions affecting current work:
 - [Phase 01-sdk-investigation-spike]: dart:js_interop_unsafe required for callAsConstructor — not in dart:js_interop itself
 - [Phase 01-sdk-investigation-spike]: HtmlElementView.fromTagName('div') is primary VLibras embedding approach; WebGL conflict TBD via manual browser run
 - [Phase 01-sdk-investigation-spike]: Synchronous CDN script load in index.html avoids async race conditions for spike
+- [Phase 01-sdk-investigation-spike P03]: window.VLibras.Player DOES NOT EXIST in CDN bundle -- vlibras-plugin.js exports only VLibras.Widget; Player is in separate vlibras-player-webjs repo with no public CDN build
+- [Phase 01-sdk-investigation-spike P03]: SC-1 FAIL, SC-2 FAIL -- runtime TypeError confirmed VLibras.Player is null; HtmlElementView architecture is correct but JS API target was wrong
+- [Phase 01-sdk-investigation-spike P03]: Phase 3 must choose between Widget (CDN, limited programmatic control) or self-hosted standalone Player (full translate() control, ~100MB+ Unity WebGL assets)
 
 ### Pending Todos
 
-None yet.
+- Phase 3 path decision: VLibras.Widget (CDN) vs. self-hosted vlibras-player-webjs (standalone Player)
 
 ### Blockers/Concerns
 
-- [Phase 1]: VLibras web player embedding in HtmlElementView with WebGL is unverified -- critical risk
-- [Phase 1]: VLibras licensing for third-party redistribution via pub.dev is unknown
+- [Phase 3]: window.VLibras.Player not in CDN bundle -- must use Widget or self-host standalone player build
+- [Phase 3]: VLibras licensing for third-party redistribution via pub.dev is UNCLEAR -- avatar asset license undocumented
+- [Phase 3]: Self-hosted Player requires Unity WebGL assets (~100MB+) -- asset hosting strategy TBD
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:49:57.996Z
-Stopped at: Completed 01-sdk-investigation-spike/01-02-PLAN.md
+Last session: 2026-03-24T02:45:00.000Z
+Stopped at: Completed 01-sdk-investigation-spike/01-03-PLAN.md
 Resume file: None

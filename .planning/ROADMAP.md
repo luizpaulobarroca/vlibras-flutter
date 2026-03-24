@@ -13,7 +13,7 @@ This roadmap delivers a Flutter Web plugin that translates Portuguese text to LI
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: SDK Investigation Spike** - Verify VLibras web player can be embedded in Flutter Web and document its JS API
-- [ ] **Phase 2: Core Dart API** - Build the Controller+Value+PlatformInterface architecture with full state machine, testable with mocks
+- [x] **Phase 2: Core Dart API** - Build the Controller+Value+PlatformInterface architecture with full state machine, testable with mocks (completed 2026-03-24)
 - [ ] **Phase 3: Web Platform Integration** - Embed VLibras web player via HtmlElementView and deliver end-to-end translate flow
 - [ ] **Phase 4: Publication Readiness** - Example app, dartdoc, README, tests, and pana score for pub.dev publication
 
@@ -82,6 +82,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
-| 2. Core Dart API | 1/2 | In progress | - |
+| 2. Core Dart API | 2/2 | Complete   | 2026-03-24 |
 | 3. Web Platform Integration | 0/? | Not started | - |
 | 4. Publication Readiness | 0/? | Not started | - |

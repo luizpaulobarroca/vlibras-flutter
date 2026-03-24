@@ -9,10 +9,10 @@ Requirements para a primeira release publicável no pub.dev.
 
 ### API Core
 
-- [ ] **CORE-01**: Developer pode instanciar um VLibrasController e associá-lo a um VLibrasView widget
+- [x] **CORE-01**: Developer pode instanciar um VLibrasController e associá-lo a um VLibrasView widget
 - [ ] **CORE-02**: Developer pode chamar translate(String text) no controller para disparar a animação LIBRAS
-- [ ] **CORE-03**: VLibrasController expõe VLibrasValue com estados: idle, loading, playing, error
-- [ ] **CORE-04**: VLibrasController possui initialize() assíncrono para inicialização e dispose() para liberação de recursos
+- [x] **CORE-03**: VLibrasController expõe VLibrasValue com estados: idle, loading, playing, error
+- [x] **CORE-04**: VLibrasController possui initialize() assíncrono para inicialização e dispose() para liberação de recursos
 
 ### Web Platform
 
@@ -21,7 +21,7 @@ Requirements para a primeira release publicável no pub.dev.
 
 ### Error Handling
 
-- [ ] **ERR-01**: Erros de tradução/inicialização são expostos via VLibrasValue.error (sem exceções lançadas para o developer)
+- [x] **ERR-01**: Erros de tradução/inicialização são expostos via VLibrasValue.error (sem exceções lançadas para o developer)
 
 ### Publication
 
@@ -63,10 +63,10 @@ Deferidos — não no roadmap atual.
 | CORE-01 | Phase 2: Core Dart API | In Progress (scaffold done; VLibrasController in 02-02) |
 | CORE-02 | Phase 3: Web Platform Integration | Pending |
 | CORE-03 | Phase 2: Core Dart API | In Progress (VLibrasValue/Status done; controller in 02-02) |
-| CORE-04 | Phase 2: Core Dart API | Pending |
+| CORE-04 | Phase 2: Core Dart API | Complete |
 | WEB-01 | Phase 3: Web Platform Integration | Pending |
 | WEB-02 | Phase 3: Web Platform Integration | Pending |
-| ERR-01 | Phase 2: Core Dart API | Pending |
+| ERR-01 | Phase 2: Core Dart API | Complete |
 | PUB-01 | Phase 4: Publication Readiness | Pending |
 | PUB-02 | Phase 4: Publication Readiness | Pending |
 | PUB-03 | Phase 4: Publication Readiness | Pending |

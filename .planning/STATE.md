@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: "Completed 02-core-dart-api 02-01-PLAN.md"
-last_updated: "2026-03-24T14:06:00Z"
+status: completed
+stopped_at: Completed 02-core-dart-api 02-02-PLAN.md
+last_updated: "2026-03-24T14:11:16.180Z"
 last_activity: 2026-03-24 -- Phase 2 Plan 1 complete (plugin scaffold, VLibrasStatus/Value/Platform, test stubs)
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
   percent: 35
 ---
 
@@ -55,6 +55,7 @@ Progress: [####......] 35%
 | Phase 01-sdk-investigation-spike P02 | 6 | 2 tasks | 4 files |
 | Phase 01-sdk-investigation-spike P03 | 45 | 2 tasks | 1 file |
 | Phase 02-core-dart-api P01 | 7 | 2 tasks | 7 files |
+| Phase 02-core-dart-api P02 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-dart-api P01]: dispose() is synchronous void (not Future<void>) to match ChangeNotifier.dispose() contract
 - [Phase 02-core-dart-api P01]: VLibrasValue.copyWith uses clearError: bool flag to explicitly null out error field
 - [Phase 02-core-dart-api P01]: library directive omitted from barrel export — unnecessary_library_name lint rule
+- [Phase 02-core-dart-api]: Playing state is reachable enum value but Phase 2 controller does not transition to it — Phase 3 platform callbacks will push that transition
+- [Phase 02-core-dart-api]: translate() accepts calls from any state (not just ready) to support cancel-and-restart pattern
+- [Phase 02-core-dart-api]: Default VLibrasController() throws UnimplementedError — VLibrasWebPlatform registered in Phase 3
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-24T14:06:00Z
-Stopped at: Completed 02-core-dart-api 02-01-PLAN.md
-Resume file: .planning/phases/02-core-dart-api/02-02-PLAN.md
+Last session: 2026-03-24T14:11:16.174Z
+Stopped at: Completed 02-core-dart-api 02-02-PLAN.md
+Resume file: None

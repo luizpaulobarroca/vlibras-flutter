@@ -17,7 +17,7 @@ Requirements para a primeira release publicável no pub.dev.
 ### Web Platform
 
 - [ ] **WEB-01**: Plugin renderiza o avatar VLibras em Flutter Web usando HtmlElementView
-- [ ] **WEB-02**: translate() envia texto ao web player VLibras e dispara a animação do avatar na view embutida
+- [x] **WEB-02**: translate() envia texto ao web player VLibras e dispara a animação do avatar na view embutida
 
 ### Error Handling
 
@@ -65,7 +65,7 @@ Deferidos — não no roadmap atual.
 | CORE-03 | Phase 2: Core Dart API | In Progress (VLibrasValue/Status done; controller in 02-02) |
 | CORE-04 | Phase 2: Core Dart API | Complete |
 | WEB-01 | Phase 3: Web Platform Integration | Pending |
-| WEB-02 | Phase 3: Web Platform Integration | Pending |
+| WEB-02 | Phase 3: Web Platform Integration | Complete |
 | ERR-01 | Phase 2: Core Dart API | Complete |
 | PUB-01 | Phase 4: Publication Readiness | Pending |
 | PUB-02 | Phase 4: Publication Readiness | Pending |

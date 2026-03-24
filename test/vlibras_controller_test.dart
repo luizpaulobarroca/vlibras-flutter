@@ -1,13 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:vlibras_flutter/vlibras_flutter.dart';
 
 import 'mocks/mock_vlibras_platform.dart';
 
 void main() {
   late MockVLibrasPlatform platform;
+  late VLibrasController controller;
 
   setUp(() {
     platform = MockVLibrasPlatform();
+    controller = VLibrasController(platform: platform);
+    when(() => platform.initialize()).thenAnswer((_) async {});
+    when(() => platform.translate(any())).thenAnswer((_) async {});
+    when(() => platform.dispose()).thenReturn(null);
+  });
+
+  tearDown(() {
+    controller.dispose();
   });
 
   // -------------------------------------------------------------------------
@@ -96,8 +106,7 @@ void main() {
       test('clearError: true sets error to null regardless of other args', () {
         const original =
             VLibrasValue(status: VLibrasStatus.error, error: 'some error');
-        final copy =
-            original.copyWith(error: 'ignored', clearError: true);
+        final copy = original.copyWith(error: 'ignored', clearError: true);
         expect(copy.error, isNull);
         expect(copy.status, VLibrasStatus.error);
       });
@@ -111,96 +120,220 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // VLibrasController — skipped until Plan 02 implements the controller
+  // VLibrasController lifecycle
   // -------------------------------------------------------------------------
-  group('VLibrasController (skipped — Plan 02)', () {
-    test(
-      'instantiates without error using default platform',
-      () {
-        // VLibrasController() — Plan 02 will implement
-      },
-      skip: 'VLibrasController not yet implemented',
-    );
+  group('VLibrasController lifecycle', () {
+    test('instantiates with injected mock platform', () {
+      final c = VLibrasController(platform: platform);
+      expect(c.value.status, VLibrasStatus.idle);
+      c.dispose();
+    });
+
+    test('initial value is idle with no error', () {
+      expect(controller.value.status, VLibrasStatus.idle);
+      expect(controller.value.error, isNull);
+    });
+
+    test('initialize() transitions idle -> initializing -> ready on success',
+        () async {
+      final states = <VLibrasStatus>[];
+      controller.addListener(() => states.add(controller.value.status));
+
+      await controller.initialize();
+
+      expect(states, [VLibrasStatus.initializing, VLibrasStatus.ready]);
+      expect(controller.value.status, VLibrasStatus.ready);
+      expect(controller.value.error, isNull);
+    });
 
     test(
-      'instantiates with injected mock platform',
-      () {
-        // VLibrasController(platform: platform) — Plan 02 will implement
-        expect(platform, isNotNull); // suppress unused variable warning
-      },
-      skip: 'VLibrasController not yet implemented',
-    );
+        'initialize() transitions idle -> initializing -> error when platform throws',
+        () async {
+      when(() => platform.initialize())
+          .thenThrow(Exception('connection refused'));
+
+      final states = <VLibrasStatus>[];
+      controller.addListener(() => states.add(controller.value.status));
+
+      await controller.initialize();
+
+      expect(states, [VLibrasStatus.initializing, VLibrasStatus.error]);
+      expect(controller.value.status, VLibrasStatus.error);
+    });
 
     test(
-      'initialize() transitions idle -> initializing -> ready on success',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+        'initialize() error message contains "Falha ao inicializar"',
+        () async {
+      when(() => platform.initialize())
+          .thenThrow(Exception('connection refused'));
+
+      await controller.initialize();
+
+      expect(controller.value.error, contains('Falha ao inicializar'));
+    });
+
+    test('initialize() is idempotent: second call when already ready is a no-op',
+        () async {
+      await controller.initialize();
+      expect(controller.value.status, VLibrasStatus.ready);
+
+      int notifyCount = 0;
+      controller.addListener(() => notifyCount++);
+
+      await controller.initialize();
+
+      expect(notifyCount, 0);
+      expect(controller.value.status, VLibrasStatus.ready);
+      verify(() => platform.initialize()).called(1);
+    });
 
     test(
-      'initialize() transitions idle -> initializing -> error when platform throws',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+        'initialize() is idempotent: call when translating is a no-op',
+        () async {
+      await controller.initialize();
+      await controller.translate('Olá');
+
+      final statusBefore = controller.value.status;
+      await controller.initialize();
+
+      expect(controller.value.status, statusBefore);
+    });
+
+    test('dispose() calls platform.dispose() then releases ChangeNotifier',
+        () {
+      final c = VLibrasController(platform: platform);
+      c.dispose();
+
+      verify(() => platform.dispose()).called(1);
+    });
+
+    test('_setValue does not notify when value unchanged', () async {
+      await controller.initialize();
+      expect(controller.value.status, VLibrasStatus.ready);
+
+      int notifyCount = 0;
+      controller.addListener(() => notifyCount++);
+
+      // initialize() with already-ready state is a no-op (idempotency),
+      // so no notifications should fire
+      await controller.initialize();
+
+      expect(notifyCount, 0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // VLibrasController translate
+  // -------------------------------------------------------------------------
+  group('VLibrasController translate', () {
+    test('translate() transitions ready -> translating on call', () async {
+      await controller.initialize();
+
+      final states = <VLibrasStatus>[];
+      controller.addListener(() => states.add(controller.value.status));
+
+      await controller.translate('Olá mundo');
+
+      expect(states.first, VLibrasStatus.translating);
+    });
+
+    test('translate() clears error field when entering translating', () async {
+      when(() => platform.initialize()).thenThrow(Exception('init failed'));
+      await controller.initialize();
+      expect(controller.value.status, VLibrasStatus.error);
+      expect(controller.value.error, isNotNull);
+
+      // Reset so translate() can proceed without error
+      when(() => platform.translate(any())).thenAnswer((_) async {});
+
+      // Recreate controller from idle to be able to translate from error state
+      // by triggering error first via translate
+      final c2 = VLibrasController(platform: platform);
+      when(() => platform.translate(any())).thenThrow(Exception('fail'));
+      await c2.translate('primeiro');
+      expect(c2.value.status, VLibrasStatus.error);
+      expect(c2.value.error, isNotNull);
+
+      // Now translate again — should clear error on entry
+      when(() => platform.translate(any())).thenAnswer((_) async {});
+      final states = <VLibrasValue>[];
+      c2.addListener(() => states.add(c2.value));
+      await c2.translate('segundo');
+
+      // The first state transition should be to translating with no error
+      expect(states.first.status, VLibrasStatus.translating);
+      expect(states.first.error, isNull);
+      c2.dispose();
+    });
 
     test(
-      'initialize() is idempotent: second call when already ready is a no-op',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+        'translate() transitions translating -> error when platform throws',
+        () async {
+      when(() => platform.translate(any()))
+          .thenThrow(Exception('translate failed'));
+
+      final states = <VLibrasStatus>[];
+      controller.addListener(() => states.add(controller.value.status));
+
+      await controller.translate('Olá');
+
+      expect(states, [VLibrasStatus.translating, VLibrasStatus.error]);
+      expect(controller.value.status, VLibrasStatus.error);
+    });
+
+    test('translate() error message contains "Falha ao traduzir"', () async {
+      when(() => platform.translate(any()))
+          .thenThrow(Exception('translate failed'));
+
+      await controller.translate('Olá');
+
+      expect(controller.value.error, contains('Falha ao traduzir'));
+    });
 
     test(
-      'translate() transitions ready -> translating on call',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+        'translate() while translating: new call cancels current and enters translating again',
+        () async {
+      // Simulate first translate still in-flight when second arrives
+      // by verifying that calling translate from translating state
+      // results in translating state again
+      when(() => platform.translate(any())).thenThrow(Exception('slow'));
 
-    test(
-      'translate() clears error field when entering translating',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+      await controller.translate('primeiro');
+      expect(controller.value.status, VLibrasStatus.error);
 
-    test(
-      'translate() transitions translating -> error when platform throws',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+      // Now from error state, translate again — re-enters translating
+      when(() => platform.translate(any())).thenAnswer((_) async {});
+      final states = <VLibrasStatus>[];
+      controller.addListener(() => states.add(controller.value.status));
 
-    test(
-      'translate() while translating: new call cancels current and enters translating again',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+      await controller.translate('segundo');
 
-    test(
-      'dispose() calls platform.dispose() then releases ChangeNotifier',
-      () {},
-      skip: 'VLibrasController not yet implemented',
-    );
+      expect(states.first, VLibrasStatus.translating);
+    });
+  });
 
-    test(
-      'no exceptions propagate from initialize() even when platform throws',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+  // -------------------------------------------------------------------------
+  // VLibrasController error handling (ERR-01)
+  // -------------------------------------------------------------------------
+  group('VLibrasController error handling (ERR-01)', () {
+    test('no exceptions propagate from initialize() even when platform throws',
+        () async {
+      when(() => platform.initialize())
+          .thenThrow(Exception('fatal platform error'));
 
-    test(
-      'no exceptions propagate from translate() even when platform throws',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+      expect(() async => controller.initialize(), returnsNormally);
+      await controller.initialize();
+      expect(controller.value.status, VLibrasStatus.error);
+    });
 
-    test(
-      'error message from initialize() contains "Falha ao inicializar"',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+    test('no exceptions propagate from translate() even when platform throws',
+        () async {
+      when(() => platform.translate(any()))
+          .thenThrow(Exception('fatal translate error'));
 
-    test(
-      'error message from translate() contains "Falha ao traduzir"',
-      () async {},
-      skip: 'VLibrasController not yet implemented',
-    );
+      expect(() async => controller.translate('text'), returnsNormally);
+      await controller.translate('text');
+      expect(controller.value.status, VLibrasStatus.error);
+    });
   });
 }

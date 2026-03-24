@@ -88,5 +88,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
 | 2. Core Dart API | 2/2 | Complete   | 2026-03-24 |
-| 3. Web Platform Integration | 0/3 | Not started | - |
+| 3. Web Platform Integration | 2/3 | In Progress|  |
 | 4. Publication Readiness | 0/? | Not started | - |

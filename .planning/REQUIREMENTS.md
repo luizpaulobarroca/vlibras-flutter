@@ -10,13 +10,13 @@ Requirements para a primeira release publicável no pub.dev.
 ### API Core
 
 - [x] **CORE-01**: Developer pode instanciar um VLibrasController e associá-lo a um VLibrasView widget
-- [ ] **CORE-02**: Developer pode chamar translate(String text) no controller para disparar a animação LIBRAS
+- [x] **CORE-02**: Developer pode chamar translate(String text) no controller para disparar a animação LIBRAS
 - [x] **CORE-03**: VLibrasController expõe VLibrasValue com estados: idle, loading, playing, error
 - [x] **CORE-04**: VLibrasController possui initialize() assíncrono para inicialização e dispose() para liberação de recursos
 
 ### Web Platform
 
-- [ ] **WEB-01**: Plugin renderiza o avatar VLibras em Flutter Web usando HtmlElementView
+- [x] **WEB-01**: Plugin renderiza o avatar VLibras em Flutter Web usando HtmlElementView
 - [x] **WEB-02**: translate() envia texto ao web player VLibras e dispara a animação do avatar na view embutida
 
 ### Error Handling
@@ -61,10 +61,10 @@ Deferidos — não no roadmap atual.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CORE-01 | Phase 2: Core Dart API | In Progress (scaffold done; VLibrasController in 02-02) |
-| CORE-02 | Phase 3: Web Platform Integration | Pending |
+| CORE-02 | Phase 3: Web Platform Integration | Complete |
 | CORE-03 | Phase 2: Core Dart API | In Progress (VLibrasValue/Status done; controller in 02-02) |
 | CORE-04 | Phase 2: Core Dart API | Complete |
-| WEB-01 | Phase 3: Web Platform Integration | Pending |
+| WEB-01 | Phase 3: Web Platform Integration | Complete |
 | WEB-02 | Phase 3: Web Platform Integration | Complete |
 | ERR-01 | Phase 2: Core Dart API | Complete |
 | PUB-01 | Phase 4: Publication Readiness | Pending |

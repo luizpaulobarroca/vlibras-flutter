@@ -7,9 +7,10 @@ import 'package:vlibras_flutter/src/vlibras_web_platform.dart';
 // ---------------------------------------------------------------------------
 // Fake player for unit tests
 //
+// Implements VLibrasPlayerAdapter so it can be injected via playerFactory.
 // Captures callbacks registered via on() so tests can fire them synchronously.
 // ---------------------------------------------------------------------------
-class FakePlayer {
+class FakePlayer implements VLibrasPlayerAdapter {
   final Map<String, void Function()> _handlers = {};
 
   void on(String event, void Function() callback) {
@@ -20,7 +21,8 @@ class FakePlayer {
     _handlers.remove(event);
   }
 
-  void load(Object element) {}
+  @override
+  void load(Object? element) {}
   void translate(String text) {}
   void pause() {}
   void stop() {}
@@ -49,7 +51,7 @@ VLibrasWebPlatform buildPlatform({
   return VLibrasWebPlatform(
     onStatus: onStatus,
     timeout: timeout,
-    playerFactory: () => fakePlayer,
+    playerFactory: () => fakePlayer as VLibrasPlayerAdapter,
   );
 }
 

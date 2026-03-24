@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-24T12:06:07.993Z"
-last_activity: 2026-03-24 -- Phase 1 Plan 3 complete (findings document with empirical SC results)
+status: in_progress
+stopped_at: "Completed 02-core-dart-api 02-01-PLAN.md"
+last_updated: "2026-03-24T14:06:00Z"
+last_activity: 2026-03-24 -- Phase 2 Plan 1 complete (plugin scaffold, VLibrasStatus/Value/Platform, test stubs)
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 25
+  total_plans: 4
+  completed_plans: 4
+  percent: 35
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 1 of 4 (SDK Investigation Spike) — COMPLETE
-Plan: 3 of 3 in current phase — COMPLETE
-Status: Phase 1 complete; ready to begin Phase 2
-Last activity: 2026-03-24 -- Phase 1 Plan 3 complete (findings document with empirical SC results)
+Phase: 2 of 4 (Core Dart API) — IN PROGRESS
+Plan: 1 of 3 in current phase — COMPLETE
+Status: Phase 2 Plan 1 complete; plugin scaffold and contracts ready; Plan 2 implements VLibrasController
+Last activity: 2026-03-24 -- Phase 2 Plan 1 complete (plugin scaffold, VLibrasStatus/Value/Platform, test stubs)
 
-Progress: [###.......] 25%
+Progress: [####......] 35%
 
 ## Performance Metrics
 
@@ -44,15 +44,17 @@ Progress: [###.......] 25%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-sdk-investigation-spike | 3 | ~60 min | ~20 min |
+| 02-core-dart-api | 1 | ~7 min | ~7 min |
 
 **Recent Trend:**
-- Last 5 plans: P01 (4min/9files), P02 (6min/4files), P03 (45min/1file)
+- Last 5 plans: P01 (4min/9files), P02 (6min/4files), P03 (45min/1file), 02-P01 (7min/7files)
 - Trend: Stable
 
 *Updated after each plan completion*
 | Phase 01-sdk-investigation-spike P01 | 4 | 2 tasks | 9 files |
 | Phase 01-sdk-investigation-spike P02 | 6 | 2 tasks | 4 files |
 | Phase 01-sdk-investigation-spike P03 | 45 | 2 tasks | 1 file |
+| Phase 02-core-dart-api P01 | 7 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -73,6 +75,10 @@ Recent decisions affecting current work:
 - [Phase 01-sdk-investigation-spike P03]: window.VLibras.Player DOES NOT EXIST in CDN bundle -- vlibras-plugin.js exports only VLibras.Widget; Player is in separate vlibras-player-webjs repo with no public CDN build
 - [Phase 01-sdk-investigation-spike P03]: SC-1 FAIL, SC-2 FAIL -- runtime TypeError confirmed VLibras.Player is null; HtmlElementView architecture is correct but JS API target was wrong
 - [Phase 01-sdk-investigation-spike P03]: Phase 3 must choose between Widget (CDN, limited programmatic control) or self-hosted standalone Player (full translate() control, ~100MB+ Unity WebGL assets)
+- [Phase 02-core-dart-api P01]: VLibrasPlatform is plain abstract class (no plugin_platform_interface) — plugin is non-federated
+- [Phase 02-core-dart-api P01]: dispose() is synchronous void (not Future<void>) to match ChangeNotifier.dispose() contract
+- [Phase 02-core-dart-api P01]: VLibrasValue.copyWith uses clearError: bool flag to explicitly null out error field
+- [Phase 02-core-dart-api P01]: library directive omitted from barrel export — unnecessary_library_name lint rule
 
 ### Pending Todos
 
@@ -86,6 +92,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-24T12:06:07.980Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-core-dart-api/02-CONTEXT.md
+Last session: 2026-03-24T14:06:00Z
+Stopped at: Completed 02-core-dart-api 02-01-PLAN.md
+Resume file: .planning/phases/02-core-dart-api/02-02-PLAN.md

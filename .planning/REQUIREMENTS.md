@@ -60,9 +60,9 @@ Deferidos — não no roadmap atual.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CORE-01 | Phase 2: Core Dart API | Pending |
+| CORE-01 | Phase 2: Core Dart API | In Progress (scaffold done; VLibrasController in 02-02) |
 | CORE-02 | Phase 3: Web Platform Integration | Pending |
-| CORE-03 | Phase 2: Core Dart API | Pending |
+| CORE-03 | Phase 2: Core Dart API | In Progress (VLibrasValue/Status done; controller in 02-02) |
 | CORE-04 | Phase 2: Core Dart API | Pending |
 | WEB-01 | Phase 3: Web Platform Integration | Pending |
 | WEB-02 | Phase 3: Web Platform Integration | Pending |
@@ -79,4 +79,4 @@ Deferidos — não no roadmap atual.
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after roadmap creation*
+*Last updated: 2026-03-24 after Phase 2 Plan 1 (scaffold + contracts)*

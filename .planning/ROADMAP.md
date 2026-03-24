@@ -48,7 +48,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Create plugin scaffold, data types (VLibrasValue + VLibrasStatus), VLibrasPlatform interface, and test stubs
+- [x] 02-01-PLAN.md — Create plugin scaffold, data types (VLibrasValue + VLibrasStatus), VLibrasPlatform interface, and test stubs
 - [ ] 02-02-PLAN.md — Implement VLibrasController state machine and activate full test suite
 
 ### Phase 3: Web Platform Integration
@@ -82,6 +82,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
-| 2. Core Dart API | 0/2 | Not started | - |
+| 2. Core Dart API | 1/2 | In progress | - |
 | 3. Web Platform Integration | 0/? | Not started | - |
 | 4. Publication Readiness | 0/? | Not started | - |

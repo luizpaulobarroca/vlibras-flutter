@@ -13,21 +13,29 @@ import 'package:vlibras_flutter/src/vlibras_web_platform.dart';
 class FakePlayer implements VLibrasPlayerAdapter {
   final Map<String, void Function()> _handlers = {};
 
+  @override
   void on(String event, void Function() callback) {
     _handlers[event] = callback;
   }
 
+  @override
   void off(String event, void Function() callback) {
     _handlers.remove(event);
   }
 
   @override
   void load(Object? element) {}
+  @override
   void translate(String text) {}
+  @override
   void pause() {}
+  @override
   void stop() {}
+  @override
   void resume() {}
+  @override
   void repeat() {}
+  @override
   void setSpeed(double speed) {}
 
   /// Fire a registered event synchronously.

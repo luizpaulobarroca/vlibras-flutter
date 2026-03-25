@@ -5,7 +5,8 @@ import 'dart:js_interop_unsafe';
 external VLibrasNamespace get vLibras;
 
 extension type VLibrasNamespace._(JSObject _) implements JSObject {
-  external JSFunction get Player;
+  @JS('Player')
+  external JSFunction get player;
 }
 
 extension type VLibrasPlayerOptions._(JSObject _) implements JSObject {
@@ -32,5 +33,5 @@ VLibrasPlayerInstance createVLibrasPlayer() {
     translator: 'https://vlibras.gov.br/api',
     targetPath: '/vlibras/target',
   );
-  return vLibras.Player.callAsConstructor(options) as VLibrasPlayerInstance;
+  return vLibras.player.callAsConstructor(options) as VLibrasPlayerInstance;
 }

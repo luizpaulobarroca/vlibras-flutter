@@ -33,10 +33,7 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script src="/vlibras/vlibras.js"></script>
   <script src="flutter_bootstrap.js" async></script>
-  <!-- VLibras CDN script: loaded synchronously to ensure window.VLibras is available
-       before Flutter calls into JS. Synchronous load avoids async race conditions
-       during the spike. In production, consider async load with a readiness callback. -->
-  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
 </body>
 </html>

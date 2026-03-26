@@ -172,44 +172,12 @@ class VLibrasWebPlatform implements VLibrasPlatform {
   // Default (production) player factory — only referenced on web
   // -------------------------------------------------------------------------
 
-  /// Production factory: wraps a real JS [VLibrasPlayerInstance].
-  ///
-  /// This is only ever called at runtime in a browser. The import of
-  /// vlibras_js.dart (which uses dart:js_interop) is deferred so tests that
-  /// run on the Dart VM never trigger it.
-  static VLibrasPlayerAdapter Function() get _defaultFactory =>
-      _RealPlayerAdapter.create;
-}
-
-// ---------------------------------------------------------------------------
-// Internal: thin adapter over the real JS player
-//
-// Kept in this file (not vlibras_js.dart) so the JS interop import is
-// isolated. Tests never instantiate this class.
-// ---------------------------------------------------------------------------
-class _RealPlayerAdapter implements VLibrasPlayerAdapter {
-  _RealPlayerAdapter._(this._instance);
-
-  // Lazily import vlibras_js only when actually constructing a real player.
-  // ignore: unused_field
-  final Object _instance; // typed as Object to avoid conditional import issues
-
-  static VLibrasPlayerAdapter create() {
-    // This will fail at compile time on non-web and at runtime if called
-    // outside a browser, which is the intended behaviour.
+  /// Production factory — provided by [createDefaultPlatform] in
+  /// platform/web_platform.dart (web-only). Never called in VM tests because
+  /// tests always inject their own [playerFactory].
+  static VLibrasPlayerAdapter Function() get _defaultFactory => () {
     throw UnsupportedError(
-      'Real VLibrasPlayerAdapter can only be created on Flutter Web. '
-      'Inject a playerFactory in tests.',
+      'No playerFactory provided. On Flutter Web, use createDefaultPlatform().',
     );
-  }
-
-  @override void load(Object? element) => throw UnimplementedError();
-  @override void translate(String text) => throw UnimplementedError();
-  @override void pause() => throw UnimplementedError();
-  @override void stop() => throw UnimplementedError();
-  @override void resume() => throw UnimplementedError();
-  @override void repeat() => throw UnimplementedError();
-  @override void setSpeed(double speed) => throw UnimplementedError();
-  @override void on(String event, void Function() callback) => throw UnimplementedError();
-  @override void off(String event, void Function() callback) => throw UnimplementedError();
+  };
 }

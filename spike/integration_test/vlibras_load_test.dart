@@ -8,7 +8,7 @@ void main() {
 
   // SC-1: VLibras avatar container (HtmlElementView) renders in widget tree
   testWidgets('VLibras player container is present in widget tree', (WidgetTester tester) async {
-    await tester.pumpWidget(const VLibrasSpikeApp());
+    await tester.pumpWidget(const App());
     // Unity WebGL cold-start can take 20-30 seconds
     await tester.pumpAndSettle(const Duration(seconds: 30));
     expect(find.byKey(const Key('vlibras-player-view')), findsOneWidget);
@@ -16,7 +16,7 @@ void main() {
 
   // SC-2: Translate button is present and tappable (visual animation confirmed manually)
   testWidgets('Translate button exists and is interactable', (WidgetTester tester) async {
-    await tester.pumpWidget(const VLibrasSpikeApp());
+    await tester.pumpWidget(const App());
     await tester.pumpAndSettle(const Duration(seconds: 30));
     expect(find.byKey(const Key('translate-btn')), findsOneWidget);
     // Note: whether the button is enabled depends on player loading — that is verified manually

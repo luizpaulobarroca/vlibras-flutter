@@ -9,13 +9,30 @@ import 'vlibras_value.dart';
 // Decouples VLibrasWebPlatform from the JS extension type so unit tests can
 // inject a fake without requiring a browser or JS runtime.
 // ---------------------------------------------------------------------------
+/// Adapter interface that decouples [VLibrasWebPlatform] from the JS extension type.
+///
+/// Production code provides a JS-backed implementation; tests inject a fake to
+/// run unit tests without a browser or JS runtime.
 abstract class VLibrasPlayerAdapter {
+  /// Loads the VLibras player into the given DOM [element].
   void load(Object? element);
+
+  /// Requests translation of [text] into LIBRAS sign language.
   void translate(String text);
+
+  /// Pauses the current animation.
   void pause();
+
+  /// Stops the current animation and resets player state.
   void stop();
+
+  /// Resumes a paused animation.
   void resume();
+
+  /// Repeats the last translation from the beginning.
   void repeat();
+
+  /// Sets the animation playback [speed] (e.g., 1.0 = normal, 0.5 = half speed).
   void setSpeed(double speed);
 
   /// Register a plain-Dart callback for [event].
@@ -162,6 +179,9 @@ class VLibrasWebPlatform implements VLibrasPlatform {
     _translateCompleter = null;
     if (c == null || c.isCompleted) return;
     if (error != null) {
+      if (error is TimeoutException) {
+        _onStatus(VLibrasStatus.error);
+      }
       c.completeError(error);
     } else {
       c.complete();

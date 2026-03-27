@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'vlibras_controller.dart';
 
@@ -21,6 +22,7 @@ import 'vlibras_controller.dart';
 class VLibrasView extends StatefulWidget {
   const VLibrasView({super.key, required this.controller});
 
+  /// The controller that manages the VLibras translation lifecycle.
   final VLibrasController controller;
 
   @override
@@ -42,6 +44,9 @@ class _VLibrasViewState extends State<VLibrasView> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb) {
+      return widget.controller.buildMobileView();
+    }
     return HtmlElementView.fromTagName(
       key: const Key('vlibras-player-view'),
       tagName: 'div',

@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'vlibras_value.dart';
 import 'vlibras_platform.dart';
 import 'platform/unsupported_platform.dart'
-    if (dart.library.js_interop) 'platform/web_platform.dart';
+    if (dart.library.js_interop) 'platform/web_platform.dart'
+    if (dart.library.io) 'platform/mobile_platform.dart';
 
 /// Controller for VLibras translation lifecycle.
 ///
@@ -38,6 +40,7 @@ class VLibrasController extends ChangeNotifier
   late final VLibrasPlatform _platform;
   VLibrasValue _value = const VLibrasValue();
 
+  /// The current state of the VLibras translation lifecycle.
   @override
   VLibrasValue get value => _value;
 
@@ -116,6 +119,14 @@ class VLibrasController extends ChangeNotifier
   void attachElement(Object element) {
     // ignore: avoid_dynamic_calls
     (_platform as dynamic).attachToElement(element);
+  }
+
+  /// Called by [VLibrasView] on non-web platforms to get the native view widget.
+  ///
+  /// Uses dynamic dispatch to avoid importing mobile-only types here.
+  Widget buildMobileView() {
+    // ignore: avoid_dynamic_calls
+    return (_platform as dynamic).buildView() as Widget;
   }
 
   // Phase 3 will add pause(), stop(), resume(), repeat(), setSpeed() by

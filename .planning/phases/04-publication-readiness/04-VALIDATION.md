@@ -2,8 +2,8 @@
 phase: 4
 slug: publication-readiness
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-27
 ---
 
@@ -38,12 +38,13 @@ created: 2026-03-27
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 4-01-01 | 01 | 1 | PUB-04 | unit | `flutter test test/vlibras_web_platform_test.dart` | ❌ Wave 0 | ⬜ pending |
-| 4-01-02 | 01 | 1 | PUB-04 | widget | `flutter test test/vlibras_view_vm_test.dart` | ❌ Wave 0 | ⬜ pending |
-| 4-01-03 | 01 | 1 | PUB-04 | widget (browser) | `flutter test --platform chrome test/vlibras_view_test.dart` | ❌ Wave 0 | ⬜ pending |
+| 4-01-01 | 01 | 1 | PUB-04 | unit | `flutter test test/vlibras_web_platform_test.dart` | ✅ (appended to existing) | ⬜ pending |
+| 4-01-02 | 01 | 1 | PUB-04 | widget | `flutter test test/vlibras_view_vm_test.dart` | ✅ (created in plan) | ⬜ pending |
+| 4-01-03 | 01 | 1 | PUB-04 | widget (browser) | `flutter test --platform chrome test/vlibras_view_test.dart` | ✅ (created/expanded in plan) | ⬜ pending |
 | 4-02-01 | 02 | 1 | PUB-03 | smoke | `flutter pub publish --dry-run` | ✅ (command exists) | ⬜ pending |
-| 4-02-02 | 02 | 1 | PUB-02 | static | `dart doc . 2>&1 \| grep "warning"` | ✅ | ⬜ pending |
-| 4-03-01 | 03 | 2 | PUB-01 | manual/smoke | `flutter run -d chrome` in example/ | ❌ Wave 0 | ⬜ pending |
+| 4-02-02 | 02 | 1 | PUB-03 | smoke | `flutter pub publish --dry-run \| grep readme` | ✅ (README created in task) | ⬜ pending |
+| 4-02-03 | 02 | 1 | PUB-02 | static | `dart doc . 2>&1 \| grep "warning"` | ✅ | ⬜ pending |
+| 4-03-01 | 03 | 2 | PUB-01 | manual/smoke | `flutter run -d chrome` in example/ | ✅ (scaffolded in plan) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,15 +52,16 @@ created: 2026-03-27
 
 ## Wave 0 Requirements
 
-- [ ] `test/vlibras_view_vm_test.dart` — stubs for PUB-04 VLibrasView non-web branch (FakeMobilePlatform)
-- [ ] `test/vlibras_web_platform_test.dart` — add `initialize() idempotent` test stub
-- [ ] `example/` directory — basic app structure (covers PUB-01 smoke test)
-- [ ] `LICENSE` — hard blocker for `flutter pub publish --dry-run`
-- [ ] `README.md` — hard blocker for `flutter pub publish --dry-run`
-- [ ] `CHANGELOG.md` — required for pub.dev scoring
-- [ ] `.pubignore` — prevents spike/ and web/vlibras/target/ from being published
+All Wave 0 requirements are resolved inline in Plans 01-03. No separate Wave 0 plan is needed:
 
-*Wave 0 must be complete before any further waves execute.*
+- [x] `test/vlibras_view_vm_test.dart` — stubs for PUB-04 VLibrasView non-web branch (FakeMobilePlatform) — covered by Plan 01 Task 2
+- [x] `test/vlibras_web_platform_test.dart` — add `initialize() idempotent` test stub — covered by Plan 01 Task 1
+- [x] `test/vlibras_view_test.dart` — browser test for onElementCreated div configuration — covered by Plan 01 Task 3
+- [x] `example/` directory — basic app structure (covers PUB-01 smoke test) — covered by Plan 03
+- [x] `LICENSE` — hard blocker for `flutter pub publish --dry-run` — covered by Plan 02 Task 1
+- [x] `README.md` — hard blocker for `flutter pub publish --dry-run` — covered by Plan 02 Task 2
+- [x] `CHANGELOG.md` — required for pub.dev scoring — covered by Plan 02 Task 1
+- [x] `.pubignore` — prevents spike/ and web/vlibras/target/ from being published — covered by Plan 02 Task 1
 
 ---
 
@@ -74,11 +76,11 @@ created: 2026-03-27
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (resolved inline in plans)
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** pending execution

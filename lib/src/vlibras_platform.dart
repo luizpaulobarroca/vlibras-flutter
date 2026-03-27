@@ -1,7 +1,7 @@
 /// Abstract platform interface for VLibras operations.
 ///
 /// Concrete implementations are provided per-platform (e.g., web in Phase 3).
-/// Tests inject a [MockVLibrasPlatform] via [VLibrasController]'s constructor.
+/// Tests inject a `MockVLibrasPlatform` via [VLibrasController]'s constructor.
 abstract class VLibrasPlatform {
   /// Initializes the underlying VLibras player.
   Future<void> initialize();

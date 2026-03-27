@@ -20,10 +20,10 @@ import 'platform/unsupported_platform.dart'
 /// ```
 ///
 /// On Flutter Web, calling [VLibrasController()] (no platform argument)
-/// automatically selects [VLibrasWebPlatform] via conditional import.
+/// automatically selects `VLibrasWebPlatform` via conditional import.
 /// On non-web platforms, the default constructor throws [UnsupportedError].
 ///
-/// The [playing] state is a reachable enum value. In Phase 2, the controller
+/// The `playing` state is a reachable enum value. In Phase 2, the controller
 /// does not transition to [VLibrasStatus.playing] autonomously — Phase 3 will
 /// push that transition via platform callbacks once the web player is wired up.
 class VLibrasController extends ChangeNotifier
@@ -31,7 +31,7 @@ class VLibrasController extends ChangeNotifier
   /// Creates a [VLibrasController].
   ///
   /// Pass a [platform] to inject a custom implementation (useful for testing).
-  /// If omitted on Flutter Web, [VLibrasWebPlatform] is used automatically.
+  /// If omitted on Flutter Web, `VLibrasWebPlatform` is used automatically.
   /// If omitted on non-web platforms, [UnsupportedError] is thrown.
   VLibrasController({VLibrasPlatform? platform}) {
     _platform = platform ?? createDefaultPlatform(_onPlatformStatus);

@@ -1,7 +1,12 @@
 name: vlibras_flutter
-description: A Flutter plugin for displaying VLibras LIBRAS translations.
-version: 0.0.1
+description: Plugin Flutter para tradução de texto para LIBRAS com avatar 3D VLibras. Suporta Flutter Web via HtmlElementView.
+version: 0.1.0
 homepage: https://github.com/example/vlibras_flutter
+topics:
+  - accessibility
+  - libras
+  - sign-language
+  - vlibras
 
 environment:
   sdk: '>=3.7.2 <4.0.0'
@@ -11,6 +16,7 @@ dependencies:
   flutter:
     sdk: flutter
   web: ^1.0.0
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:
@@ -20,4 +26,9 @@ dev_dependencies:
 
 flutter:
   plugin:
-    platforms: {}
+    platforms:
+      web:
+        pluginClass: none
+        fileName: vlibras_flutter_web.dart
+  assets:
+    - assets/vlibras.js

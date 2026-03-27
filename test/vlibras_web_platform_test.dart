@@ -200,5 +200,91 @@ void main() {
       await expectLater(initFuture, completes);
       p2.dispose();
     });
+
+    // -----------------------------------------------------------------------
+    // 8. initialize() is idempotent — second call while already ready returns
+    //    without re-initializing
+    // -----------------------------------------------------------------------
+    test('initialize() is idempotent — second call when already ready returns '
+        'without re-initializing', () async {
+      final fp = FakePlayer();
+      final p = buildPlatform(
+        fakePlayer: fp,
+        onStatus: (_) {},
+      );
+
+      // First initialize: call initialize(), attach element, fire load.
+      final initFuture = p.initialize();
+      p.attachToElement(null);
+      fp.fire('load');
+      await initFuture;
+
+      // Second initialize: should return immediately (completer already completed).
+      // No 'load' event needed — it must resolve without any external trigger.
+      await expectLater(p.initialize(), completes);
+
+      p.dispose();
+    });
+
+    // -----------------------------------------------------------------------
+    // 9. translate() cancel-and-restart while playing — animation:end from
+    //    first is attributed to second; final status is ready
+    // -----------------------------------------------------------------------
+    test(
+        'second translate() while playing supersedes the first; single '
+        'animation:end completes the second translate', () async {
+      // Capture the first future's error immediately to prevent unhandled error.
+      bool firstErrored = false;
+      final firstFuture = platform
+          .translate('primeiro')
+          .catchError((_) => firstErrored = true);
+
+      fakePlayer.fire('animation:play'); // player is now playing
+
+      // Immediately start second translation — cancels the first.
+      final secondFuture = platform.translate('segundo');
+
+      // Fire animation:end once — should complete the second translate.
+      fakePlayer.fire('animation:end');
+
+      // Second translate completes normally.
+      await expectLater(secondFuture, completes);
+
+      // Await first to ensure its error handler has run.
+      await firstFuture;
+      expect(firstErrored, isTrue);
+
+      // Final status after animation:end is ready, not error.
+      expect(statusLog.last, equals(VLibrasStatus.ready));
+    });
+
+    // -----------------------------------------------------------------------
+    // 10. Timeout fires without animation:end — platform emits
+    //     VLibrasStatus.error via onStatus
+    // -----------------------------------------------------------------------
+    test(
+        'timeout without animation:end causes platform to emit '
+        'VLibrasStatus.error via onStatus', () async {
+      final timeoutStatusLog = <VLibrasStatus>[];
+      final fp = FakePlayer();
+      final p = buildPlatform(
+        fakePlayer: fp,
+        onStatus: (s) => timeoutStatusLog.add(s),
+        timeout: const Duration(milliseconds: 100),
+      );
+      p.attachToElement(null);
+
+      // Start translate — timer begins.
+      final translateFuture = p.translate('texto').catchError((_) {});
+
+      // Wait longer than the timeout to let the timer fire.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      await translateFuture;
+
+      // Platform must have emitted VLibrasStatus.error.
+      expect(timeoutStatusLog, contains(VLibrasStatus.error));
+
+      p.dispose();
+    });
   });
 }

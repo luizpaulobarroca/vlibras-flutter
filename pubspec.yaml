@@ -25,10 +25,5 @@ dev_dependencies:
   mocktail: ^0.3.0
 
 flutter:
-  plugin:
-    platforms:
-      web:
-        pluginClass: none
-        fileName: vlibras_flutter_web.dart
   assets:
     - assets/vlibras.js

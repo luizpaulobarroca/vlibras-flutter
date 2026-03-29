@@ -1,5 +1,7 @@
 import 'dart:js_interop';
 
+import 'package:web/web.dart' as web;
+
 import '../vlibras_js.dart';
 import '../vlibras_platform.dart';
 import '../vlibras_value.dart';
@@ -32,7 +34,23 @@ class _WebPlayerAdapter implements VLibrasPlayerAdapter {
       _WebPlayerAdapter._(createVLibrasPlayer());
 
   @override
-  void load(Object? element) => _instance.load(element as JSObject);
+  void load(Object? element) {
+    _disableCanvasRotation();
+    _instance.load(element as JSObject);
+  }
+
+  /// Injects a CSS rule that sets pointer-events:none on the Unity canvas so
+  /// mousemove events never reach it, preventing the avatar from rotating.
+  static bool _rotationDisabled = false;
+  static void _disableCanvasRotation() {
+    if (_rotationDisabled) return;
+    _rotationDisabled = true;
+    final style = web.document.createElement('style') as web.HTMLStyleElement;
+    style.id = 'vlibras-no-rotation';
+    style.textContent =
+        '#gameContainer canvas { pointer-events: none !important; }';
+    (web.document.head ?? web.document.body)?.appendChild(style);
+  }
 
   @override
   void translate(String text) => _instance.translate(text);

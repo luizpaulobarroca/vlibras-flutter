@@ -77,13 +77,14 @@ Plans:
   3. README contains installation instructions, a minimal usage code snippet, and a list of supported platforms
   4. Unit and/or widget tests exist for VLibrasController behavior (state transitions, error handling, lifecycle)
   5. `flutter pub publish --dry-run` completes with no blocking errors
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 Plans:
 - [ ] 04-01-PLAN.md — Expand test coverage: VLibrasWebPlatform error cases and VLibrasView non-web branch (VM-runnable)
 - [ ] 04-02-PLAN.md — Publication metadata (LICENSE, README, CHANGELOG, .pubignore, pubspec) and complete dartdoc
 - [ ] 04-03-PLAN.md — Create /example app with draggable snap-to-corner VLibrasView and polished UI
 - [ ] 04-04-PLAN.md — Run automated gates (flutter test, publish dry-run, dart doc) and human-verify example app
+- [ ] 04-05-PLAN.md — Gap closure: add plugin: platforms: web: {} to pubspec.yaml, add doc/ to .pubignore, commit pending web_platform.dart changes
 
 ## Progress
 
@@ -95,4 +96,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
 | 2. Core Dart API | 2/2 | Complete   | 2026-03-24 |
 | 3. Web Platform Integration | 2/3 | In Progress|  |
-| 4. Publication Readiness | 4/4 | Complete   | 2026-03-29 |
+| 4. Publication Readiness | 4/5 | In Progress (gap closure)|  |

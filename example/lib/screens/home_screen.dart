@@ -50,8 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) => Stack(
+          children: [
           // Main content
           SafeArea(
             child: SingleChildScrollView(
@@ -163,9 +164,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Floating draggable avatar (always on top via Stack ordering)
-          DraggableAvatar(controller: widget.controller),
+          // Floating draggable avatar — size passed explicitly so snap
+          // calculations use Stack bounds, not the MediaQuery screen size.
+          DraggableAvatar(
+            controller: widget.controller,
+            availableSize: Size(constraints.maxWidth, constraints.maxHeight),
+          ),
         ],
+        ),
       ),
     );
   }

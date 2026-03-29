@@ -9,10 +9,14 @@ class DraggableAvatar extends StatefulWidget {
   const DraggableAvatar({
     super.key,
     required this.controller,
+    required this.availableSize,
     this.size = 200.0,
   });
 
   final VLibrasController controller;
+
+  /// The available area for the avatar to snap within (Stack bounds).
+  final Size availableSize;
 
   /// Width and height of the avatar in logical pixels. Defaults to 200.
   final double size;
@@ -32,7 +36,7 @@ class _DraggableAvatarState extends State<DraggableAvatar> {
   }
 
   void _onPanEnd(DragEndDetails details) {
-    final size = MediaQuery.sizeOf(context);
+    final size = widget.availableSize;
     final cx = _position.dx < size.width / 2
         ? _margin
         : size.width - widget.size - _margin;

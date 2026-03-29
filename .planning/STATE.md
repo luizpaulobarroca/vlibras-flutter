@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-publication-readiness/04-04-PLAN.md
-last_updated: "2026-03-29T18:13:14.273Z"
+stopped_at: Completed 04-publication-readiness/04-05-PLAN.md
+last_updated: "2026-03-29T18:43:59.674Z"
 last_activity: 2026-03-24 -- Phase 2 Plan 1 complete (plugin scaffold, VLibrasStatus/Value/Platform, test stubs)
 progress:
   total_phases: 4
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 13
+  completed_plans: 13
   percent: 35
 ---
 
@@ -60,6 +60,7 @@ Progress: [####......] 35%
 | Phase 03-web-platform-integration P02 | 7 | 1 tasks | 4 files |
 | Phase 04-publication-readiness P03 | 7 | 2 tasks | 7 files |
 | Phase 04-publication-readiness P04 | 5 | 2 tasks | 0 files |
+| Phase 04-publication-readiness P05 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Recent decisions affecting current work:
 - [Phase 04-publication-readiness]: Removed plugin: section from root pubspec.yaml — non-federated plugin using conditional imports does not need flutter_web_plugins registrar
 - [Phase 04-publication-readiness]: DraggableAvatar snap-to-corner pattern: AnimatedPositioned direct Stack child with easeOutBack, no explicit animation flag needed
 - [Phase 04-publication-readiness]: Phase 4 signed off: all automated gates green (flutter test + publish dry-run + dart doc) and human approved all 6 UX behaviors in example app
+- [Phase 04-publication-readiness]: flutter.plugin.platforms.web: {} added to pubspec.yaml for pana platform scoring — non-federated plugins using conditional imports still need explicit declaration
+- [Phase 04-publication-readiness]: doc/ added to .pubignore to exclude generated dartdoc HTML (~225 KB) from published package
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:13:14.267Z
-Stopped at: Completed 04-publication-readiness/04-04-PLAN.md
+Last session: 2026-03-29T18:43:59.669Z
+Stopped at: Completed 04-publication-readiness/04-05-PLAN.md
 Resume file: None

@@ -26,9 +26,9 @@ Requirements para a primeira release publicável no pub.dev.
 ### Publication
 
 - [x] **PUB-01**: Plugin inclui app /example funcional demonstrando uso básico do Controller+View
-- [ ] **PUB-02**: Toda API pública possui comentários dartdoc (classes, métodos, propriedades)
-- [ ] **PUB-03**: README documenta instalação, uso básico e plataformas suportadas
-- [ ] **PUB-04**: Plugin inclui testes unitários e/ou widget cobrindo o comportamento do controller
+- [x] **PUB-02**: Toda API pública possui comentários dartdoc (classes, métodos, propriedades)
+- [x] **PUB-03**: README documenta instalação, uso básico e plataformas suportadas
+- [x] **PUB-04**: Plugin inclui testes unitários e/ou widget cobrindo o comportamento do controller
 
 ## v2 Requirements
 
@@ -68,9 +68,9 @@ Deferidos — não no roadmap atual.
 | WEB-02 | Phase 3: Web Platform Integration | Complete |
 | ERR-01 | Phase 2: Core Dart API | Complete |
 | PUB-01 | Phase 4: Publication Readiness | Complete |
-| PUB-02 | Phase 4: Publication Readiness | Pending |
-| PUB-03 | Phase 4: Publication Readiness | Pending |
-| PUB-04 | Phase 4: Publication Readiness | Pending |
+| PUB-02 | Phase 4: Publication Readiness | Complete |
+| PUB-03 | Phase 4: Publication Readiness | Complete |
+| PUB-04 | Phase 4: Publication Readiness | Complete |
 
 **Coverage:**
 - v1 requirements: 11 total

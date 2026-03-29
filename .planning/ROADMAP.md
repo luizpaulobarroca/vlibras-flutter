@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: SDK Investigation Spike** - Verify VLibras web player can be embedded in Flutter Web and document its JS API
 - [x] **Phase 2: Core Dart API** - Build the Controller+Value+PlatformInterface architecture with full state machine, testable with mocks (completed 2026-03-24)
 - [ ] **Phase 3: Web Platform Integration** - Embed VLibras web player via HtmlElementView and deliver end-to-end translate flow
-- [ ] **Phase 4: Publication Readiness** - Example app, dartdoc, README, tests, and pana score for pub.dev publication
+- [x] **Phase 4: Publication Readiness** - Example app, dartdoc, README, tests, and pana score for pub.dev publication (completed 2026-03-29)
 
 ## Phase Details
 
@@ -95,4 +95,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. SDK Investigation Spike | 3/3 | Complete | 2026-03-24 |
 | 2. Core Dart API | 2/2 | Complete   | 2026-03-24 |
 | 3. Web Platform Integration | 2/3 | In Progress|  |
-| 4. Publication Readiness | 1/4 | In Progress|  |
+| 4. Publication Readiness | 4/4 | Complete   | 2026-03-29 |

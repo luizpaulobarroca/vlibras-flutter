@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-publication-readiness/04-03-PLAN.md
-last_updated: "2026-03-27T23:21:32.066Z"
+stopped_at: Completed 04-publication-readiness/04-04-PLAN.md
+last_updated: "2026-03-29T18:13:14.273Z"
 last_activity: 2026-03-24 -- Phase 2 Plan 1 complete (plugin scaffold, VLibrasStatus/Value/Platform, test stubs)
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 9
+  completed_plans: 12
   percent: 35
 ---
 
@@ -59,6 +59,7 @@ Progress: [####......] 35%
 | Phase 03-web-platform-integration P01 | 4 | 1 tasks | 6 files |
 | Phase 03-web-platform-integration P02 | 7 | 1 tasks | 4 files |
 | Phase 04-publication-readiness P03 | 7 | 2 tasks | 7 files |
+| Phase 04-publication-readiness P04 | 5 | 2 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,7 @@ Recent decisions affecting current work:
 - [Phase 03-web-platform-integration]: Conditional import in vlibras_controller.dart: platform/unsupported_platform.dart if (dart.library.js_interop) platform/web_platform.dart wires VLibrasWebPlatform on web, UnsupportedError on non-web
 - [Phase 04-publication-readiness]: Removed plugin: section from root pubspec.yaml — non-federated plugin using conditional imports does not need flutter_web_plugins registrar
 - [Phase 04-publication-readiness]: DraggableAvatar snap-to-corner pattern: AnimatedPositioned direct Stack child with easeOutBack, no explicit animation flag needed
+- [Phase 04-publication-readiness]: Phase 4 signed off: all automated gates green (flutter test + publish dry-run + dart doc) and human approved all 6 UX behaviors in example app
 
 ### Pending Todos
 
@@ -107,6 +109,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-27T23:21:32.060Z
-Stopped at: Completed 04-publication-readiness/04-03-PLAN.md
+Last session: 2026-03-29T18:13:14.267Z
+Stopped at: Completed 04-publication-readiness/04-04-PLAN.md
 Resume file: None

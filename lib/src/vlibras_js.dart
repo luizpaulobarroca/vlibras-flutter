@@ -30,8 +30,7 @@ extension type VLibrasPlayerInstance._(JSObject _) implements JSObject {
 
 VLibrasPlayerInstance createVLibrasPlayer() {
   final options = VLibrasPlayerOptions(
-    translator: 'https://vlibras.gov.br/api',
-    targetPath: 'https://cdn.jsdelivr.net/gh/spbgovbr-vlibras/vlibras-portal@dev/app/target',
+    targetPath: 'https://vlibras.gov.br/app',
   );
   return vLibras.player.callAsConstructor(options) as VLibrasPlayerInstance;
 }

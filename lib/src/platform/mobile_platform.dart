@@ -74,7 +74,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     var player = null;
     window.addEventListener('load', function() {
       try {
-        player = new VLibras.Player({ targetPath: 'https://cdn.jsdelivr.net/gh/spbgovbr-vlibras/vlibras-portal@dev/app/target' });
+        player = new VLibras.Player({ targetPath: 'https://vlibras.gov.br/app' });
         player.on('load', function() { VLibrasBridge.postMessage('load'); });
         player.on('animation:play', function() { VLibrasBridge.postMessage('animation:play'); });
         player.on('animation:end', function() { VLibrasBridge.postMessage('animation:end'); });

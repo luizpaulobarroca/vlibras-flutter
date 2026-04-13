@@ -1,0 +1,18 @@
+# Dart/Flutter generated
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+
+# Generated dartdoc
+doc/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Claude Code memory (local session data — not project source)
+.claude/

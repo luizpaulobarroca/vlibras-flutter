@@ -33,8 +33,27 @@ class VLibrasController extends ChangeNotifier
   /// Pass a [platform] to inject a custom implementation (useful for testing).
   /// If omitted on Flutter Web, `VLibrasWebPlatform` is used automatically.
   /// If omitted on non-web platforms, [UnsupportedError] is thrown.
-  VLibrasController({VLibrasPlatform? platform}) {
-    _platform = platform ?? createDefaultPlatform(_onPlatformStatus);
+  ///
+  /// [targetPath] sets the base URL from which the Unity WebGL player assets
+  /// (`UnityLoader.js`, `playerweb.json`, etc.) are served.
+  /// Defaults to `/vlibras/target`, which matches the conventional layout:
+  /// ```
+  /// web/
+  ///   vlibras/
+  ///     vlibras.js
+  ///     target/          ← copy from the plugin's web/vlibras/target/
+  ///       UnityLoader.js
+  ///       playerweb.json
+  ///       ...
+  /// ```
+  /// For production, set this to a CDN or server URL that you control and that
+  /// sends CORS headers for your app's origin.
+  VLibrasController({
+    VLibrasPlatform? platform,
+    String targetPath = '/vlibras/target',
+  }) {
+    _platform =
+        platform ?? createDefaultPlatform(_onPlatformStatus, targetPath);
   }
 
   late final VLibrasPlatform _platform;

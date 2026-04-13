@@ -7,18 +7,25 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../vlibras_platform.dart';
 import '../vlibras_value.dart';
 
-VLibrasPlatform createDefaultPlatform(void Function(VLibrasStatus) onStatus) {
-  return VLibrasMobilePlatform(onStatus: onStatus);
+VLibrasPlatform createDefaultPlatform(
+  void Function(VLibrasStatus) onStatus,
+  String targetPath,
+) {
+  return VLibrasMobilePlatform(onStatus: onStatus, targetPath: targetPath);
 }
 
 class VLibrasMobilePlatform implements VLibrasPlatform {
-  VLibrasMobilePlatform({required void Function(VLibrasStatus) onStatus})
-      : _onStatus = onStatus {
+  VLibrasMobilePlatform({
+    required void Function(VLibrasStatus) onStatus,
+    String targetPath = 'https://vlibras.gov.br/app',
+  })  : _onStatus = onStatus,
+        _targetPath = targetPath {
     _controller = _buildController();
     _loadHtml();
   }
 
   final void Function(VLibrasStatus) _onStatus;
+  final String _targetPath;
   late final WebViewController _controller;
   Completer<void>? _initCompleter;
   bool _loaded = false;
@@ -45,12 +52,12 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     final vlibrasJs = await rootBundle
         .loadString('packages/vlibras_flutter/assets/vlibras.js');
     await _controller.loadHtmlString(
-      _buildHtml(vlibrasJs),
+      _buildHtml(vlibrasJs, _targetPath),
       baseUrl: 'https://vlibras.gov.br/',
     );
   }
 
-  static String _buildHtml(String vlibrasJs) => '''
+  static String _buildHtml(String vlibrasJs, String targetPath) => '''
 <!DOCTYPE html>
 <html>
 <head>
@@ -74,7 +81,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     var player = null;
     window.addEventListener('load', function() {
       try {
-        player = new VLibras.Player({ targetPath: 'https://vlibras.gov.br/app' });
+        player = new VLibras.Player({ targetPath: '$targetPath' });
         player.on('load', function() { VLibrasBridge.postMessage('load'); });
         player.on('animation:play', function() { VLibrasBridge.postMessage('animation:play'); });
         player.on('animation:end', function() { VLibrasBridge.postMessage('animation:end'); });

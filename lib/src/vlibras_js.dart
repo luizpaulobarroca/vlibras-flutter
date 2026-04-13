@@ -28,9 +28,7 @@ extension type VLibrasPlayerInstance._(JSObject _) implements JSObject {
   external void off(String event, JSFunction callback);
 }
 
-VLibrasPlayerInstance createVLibrasPlayer() {
-  final options = VLibrasPlayerOptions(
-    targetPath: 'https://vlibras.gov.br/app',
-  );
+VLibrasPlayerInstance createVLibrasPlayer(String targetPath) {
+  final options = VLibrasPlayerOptions(targetPath: targetPath);
   return vLibras.player.callAsConstructor(options) as VLibrasPlayerInstance;
 }

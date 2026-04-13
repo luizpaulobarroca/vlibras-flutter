@@ -7,10 +7,13 @@ import '../vlibras_platform.dart';
 import '../vlibras_value.dart';
 import '../vlibras_web_platform.dart';
 
-VLibrasPlatform createDefaultPlatform(void Function(VLibrasStatus) onStatus) {
+VLibrasPlatform createDefaultPlatform(
+  void Function(VLibrasStatus) onStatus,
+  String targetPath,
+) {
   return VLibrasWebPlatform(
     onStatus: onStatus,
-    playerFactory: _WebPlayerAdapter.create,
+    playerFactory: () => _WebPlayerAdapter.create(targetPath),
   );
 }
 
@@ -30,8 +33,8 @@ class _WebPlayerAdapter implements VLibrasPlayerAdapter {
   // the exact same JS reference that was registered.
   final Map<String, JSFunction> _jsCallbacks = {};
 
-  static VLibrasPlayerAdapter create() =>
-      _WebPlayerAdapter._(createVLibrasPlayer());
+  static VLibrasPlayerAdapter create(String targetPath) =>
+      _WebPlayerAdapter._(createVLibrasPlayer(targetPath));
 
   @override
   void load(Object? element) {

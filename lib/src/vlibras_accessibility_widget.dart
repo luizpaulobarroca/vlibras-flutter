@@ -15,12 +15,19 @@ import 'vlibras_value.dart';
 /// The widget owns the full [VLibrasController] lifecycle — you do not need
 /// to create, initialize, or dispose the controller yourself.
 ///
-/// Example:
+/// **Usage — via `MaterialApp.builder`** (required):
 /// ```dart
-/// VLibrasAccessibilityWidget(
-///   child: MaterialApp(home: MyHomePage()),
+/// MaterialApp(
+///   builder: (context, child) =>
+///       VLibrasAccessibilityWidget(child: child!),
+///   home: MyHomePage(),
 /// )
 /// ```
+///
+/// The widget must live **inside** `MaterialApp` so that `Directionality`,
+/// `MediaQuery`, `Theme` and `Navigator` are available as ancestors.
+/// Placing it above `MaterialApp` causes "No Directionality widget found"
+/// and similar errors.
 class VLibrasAccessibilityWidget extends StatefulWidget {
   const VLibrasAccessibilityWidget({
     super.key,

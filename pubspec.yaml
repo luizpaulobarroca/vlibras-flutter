@@ -31,6 +31,6 @@ flutter:
     platforms:
       web:
         pluginClass: VLibrasFlutterWebPlugin
-        fileName: lib/vlibras_flutter_web_plugin.dart
+        fileName: vlibras_flutter_web_plugin.dart
   assets:
     - assets/vlibras.js

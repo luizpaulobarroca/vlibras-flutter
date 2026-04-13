@@ -105,3 +105,12 @@ Phase 4 is now fully signed off:
 ---
 *Phase: 04-publication-readiness*
 *Completed: 2026-03-29*
+
+## Self-Check: PASSED
+
+- pubspec.yaml: FOUND and contains `plugin: platforms: web: {}`
+- .pubignore: FOUND and contains `doc/` on its own line
+- lib/src/platform/web_platform.dart: FOUND and committed (git diff HEAD shows 0 lines)
+- .planning/phases/04-publication-readiness/04-05-SUMMARY.md: FOUND
+- Commit 015ba7e: FOUND in git log
+- flutter pub publish --dry-run: Package has 0 warnings

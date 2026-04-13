@@ -7,7 +7,7 @@ Plugin Flutter para exibir traduções de texto para LIBRAS usando o avatar 3D V
 | Plataforma | Suporte |
 |------------|---------|
 | Flutter Web | ✓ |
-| Android | Planejado (v2) |
+| Android | ✓ |
 | iOS | Planejado (v2) |
 
 ## Instalação
@@ -19,17 +19,29 @@ dependencies:
   vlibras_flutter: ^0.1.0
 ```
 
-### Configuração dos assets VLibras
+### Configuração para Flutter Web
 
-O plugin requer os assets do player VLibras na pasta `web/vlibras/` do seu app Flutter Web:
+O plugin requer o arquivo `vlibras.js` na pasta `web/vlibras/` do seu app:
 
 1. Copie o arquivo `vlibras.js` para `web/vlibras/vlibras.js`
-2. Copie a pasta `target/` para `web/vlibras/target/`
-3. Adicione o script no `web/index.html` antes do `</body>`:
+2. Adicione o script no `web/index.html` antes do `</body>`:
 
 ```html
 <script src="vlibras/vlibras.js"></script>
 ```
+
+### Configuração para Android
+
+Adicione a permissão de internet no `android/app/src/main/AndroidManifest.xml` do seu app:
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    ...
+</manifest>
+```
+
+O avatar carrega os assets 3D via CDN — nenhum arquivo adicional é necessário.
 
 ## Uso básico
 

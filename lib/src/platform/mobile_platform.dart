@@ -21,6 +21,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   final void Function(VLibrasStatus) _onStatus;
   late final WebViewController _controller;
   Completer<void>? _initCompleter;
+  bool _loaded = false;
   String? _pendingText;
 
   Widget buildView() => WebViewWidget(controller: _controller);
@@ -98,6 +99,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     }
     switch (message) {
       case 'load':
+        _loaded = true;
         if (_initCompleter != null && !_initCompleter!.isCompleted) {
           _initCompleter!.complete();
         }
@@ -118,6 +120,11 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   Future<void> initialize() {
     if (_initCompleter != null) return _initCompleter!.future;
     _initCompleter = Completer<void>();
+    // Guard against the rare case where the player 'load' event fired before
+    // initialize() was called (e.g. very fast CDN response).
+    if (_loaded && !_initCompleter!.isCompleted) {
+      _initCompleter!.complete();
+    }
     return _initCompleter!.future;
   }
 

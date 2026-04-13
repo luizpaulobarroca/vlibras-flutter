@@ -122,9 +122,11 @@ class _VLibrasAccessibilityWidgetState
     );
   }
 
-  Widget _buildAvatarPanel(BuildContext context) {
+  Widget _buildAvatarPanel(BuildContext context, VLibrasValue value) {
     final screenHeight = MediaQuery.of(context).size.height;
     final topOffset = (screenHeight - widget.avatarHeight) / 2;
+    final isLoading = value.status == VLibrasStatus.initializing ||
+        value.status == VLibrasStatus.idle;
 
     return Positioned(
       right: 0,
@@ -141,7 +143,43 @@ class _VLibrasAccessibilityWidgetState
         child: Stack(
           fit: StackFit.expand,
           children: [
+            // VLibrasView must always be in the tree when expanded so that
+            // onElementCreated fires and attachToElement initialises the player.
             VLibrasView(controller: _controller),
+            // Loading overlay — shown while Unity WebGL loads from CDN.
+            if (isLoading)
+              const ColoredBox(
+                color: Colors.black87,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Colors.white),
+                      SizedBox(height: 12),
+                      Text(
+                        'Carregando avatar...',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Error overlay
+            if (value.status == VLibrasStatus.error)
+              ColoredBox(
+                color: Colors.black87,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      value.error ?? 'Erro ao carregar',
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            // Close button — always on top
             Positioned(
               top: 8,
               right: 8,
@@ -166,8 +204,8 @@ class _VLibrasAccessibilityWidgetState
           widget.child,
           ValueListenableBuilder<VLibrasValue>(
             valueListenable: _controller,
-            builder: (context, _, __) => _isExpanded
-                ? _buildAvatarPanel(context)
+            builder: (context, value, __) => _isExpanded
+                ? _buildAvatarPanel(context, value)
                 : _buildFloatingButton(),
           ),
         ],

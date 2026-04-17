@@ -34,3 +34,8 @@ flutter:
         fileName: vlibras_flutter_web_plugin.dart
   assets:
     - assets/vlibras.js
+    - assets/unity_loader.js
+    - assets/vlibras/target/playerweb.json
+    - assets/vlibras/target/playerweb.data.unityweb
+    - assets/vlibras/target/playerweb.wasm.code.unityweb
+    - assets/vlibras/target/playerweb.wasm.framework.unityweb

@@ -270,27 +270,50 @@
 	Player.prototype._initializeTarget = function () {
 	  //const targetSetup = path.join(this.options.targetPath, 'playerweb.json');
 	  const targetSetup = url(this.options.targetPath, "playerweb.json");
-	  const targetScript = document.createElement("script");
 
-	  targetScript.src = this._getTargetScript();
-	  targetScript.onload = () => {
+	  const _instantiate = () => {
 	    this.player = UnityLoader.instantiate("gameContainer", targetSetup, {
 	      compatibilityCheck: (_, accept, deny) => {
 	        if (UnityLoader.SystemInfo.hasWebGL) {
 	          return accept();
 	        }
-
 	        this.onError("unsupported");
 	        alert("Seu navegador não suporta WEBGL");
 	        console.error("Seu navegador não suporta WEBGL");
 	        deny();
 	      },
 	    });
-
 	    this.playerManager.setPlayerReference(this.player);
 	  };
 
-	  document.body.appendChild(targetScript);
+	  // Fast path: UnityLoader was inlined in the HTML (mobile) — use it directly.
+	  if (typeof UnityLoader !== 'undefined') {
+	    _instantiate();
+	    return;
+	  }
+
+	  // Fallback: load UnityLoader.js via fetch+blob to avoid Android WebView ORB
+	  // blocking that affects <script src="cross-origin"> tags.
+	  const targetScriptUrl = this._getTargetScript();
+	  fetch(targetScriptUrl)
+	    .then(r => {
+	      if (!r.ok) throw new Error('HTTP ' + r.status);
+	      return r.blob();
+	    })
+	    .then(blob => {
+	      const blobUrl = URL.createObjectURL(blob);
+	      const s = document.createElement("script");
+	      s.src = blobUrl;
+	      s.onload = () => { URL.revokeObjectURL(blobUrl); _instantiate(); };
+	      s.onerror = () => {
+	        URL.revokeObjectURL(blobUrl);
+	        console.error('[VLibras] Failed to execute Unity loader from: ' + targetScriptUrl);
+	      };
+	      document.body.appendChild(s);
+	    })
+	    .catch(err => {
+	      console.error('[VLibras] Failed to fetch Unity loader from: ' + targetScriptUrl + ' | ' + err.message);
+	    });
 	};
 
 	Player.prototype.changeStatus = function (status) {
@@ -1294,10 +1317,12 @@
 	};
 
 	PlayerManagerAdapter.prototype._send = function (method, params) {
+	  if (!this.player) return;
 	  this.player.SendMessage(GAME_OBJECT, method, params);
 	};
 
 	PlayerManagerAdapter.prototype.applyEmotion = function (action, intensity) {
+	  if (!this.player) return;
 	  this.player.SendMessage(EMOTION_OBJECT, action, intensity);
 	};
 
@@ -1307,6 +1332,7 @@
 	};
 
 	PlayerManagerAdapter.prototype.setPersonalization = function (personalization) {
+	  if (!this.player) return;
 	  this.player.SendMessage(CUSTOMIZATION_OBJECT, "setURL", personalization);
 	};
 

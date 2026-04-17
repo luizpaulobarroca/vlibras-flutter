@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Allows cleartext (HTTP) traffic to the loopback address only.
+  The VLibras plugin serves Unity WebGL assets from a dart:io HttpServer
+  bound to 127.0.0.1 so they can be loaded by the in-app WebView without
+  CDN/CORS/ORB restrictions. All other traffic remains HTTPS-only.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

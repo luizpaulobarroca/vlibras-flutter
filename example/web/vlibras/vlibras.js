@@ -270,27 +270,41 @@
 	Player.prototype._initializeTarget = function () {
 	  //const targetSetup = path.join(this.options.targetPath, 'playerweb.json');
 	  const targetSetup = url(this.options.targetPath, "playerweb.json");
-	  const targetScript = document.createElement("script");
+	  const targetScriptUrl = this._getTargetScript();
 
-	  targetScript.src = this._getTargetScript();
-	  targetScript.onload = () => {
-	    this.player = UnityLoader.instantiate("gameContainer", targetSetup, {
-	      compatibilityCheck: (_, accept, deny) => {
-	        if (UnityLoader.SystemInfo.hasWebGL) {
-	          return accept();
-	        }
-
-	        this.onError("unsupported");
-	        alert("Seu navegador não suporta WEBGL");
-	        console.error("Seu navegador não suporta WEBGL");
-	        deny();
-	      },
+	  fetch(targetScriptUrl)
+	    .then(r => {
+	      if (!r.ok) throw new Error('HTTP ' + r.status);
+	      return r.blob();
+	    })
+	    .then(blob => {
+	      const blobUrl = URL.createObjectURL(blob);
+	      const targetScript = document.createElement("script");
+	      targetScript.src = blobUrl;
+	      targetScript.onload = () => {
+	        URL.revokeObjectURL(blobUrl);
+	        this.player = UnityLoader.instantiate("gameContainer", targetSetup, {
+	          compatibilityCheck: (_, accept, deny) => {
+	            if (UnityLoader.SystemInfo.hasWebGL) {
+	              return accept();
+	            }
+	            this.onError("unsupported");
+	            alert("Seu navegador não suporta WEBGL");
+	            console.error("Seu navegador não suporta WEBGL");
+	            deny();
+	          },
+	        });
+	        this.playerManager.setPlayerReference(this.player);
+	      };
+	      targetScript.onerror = () => {
+	        URL.revokeObjectURL(blobUrl);
+	        console.error('[VLibras] Failed to execute Unity loader from: ' + targetScriptUrl);
+	      };
+	      document.body.appendChild(targetScript);
+	    })
+	    .catch(err => {
+	      console.error('[VLibras] Failed to fetch Unity loader from: ' + targetScriptUrl + ' | ' + err.message);
 	    });
-
-	    this.playerManager.setPlayerReference(this.player);
-	  };
-
-	  document.body.appendChild(targetScript);
 	};
 
 	Player.prototype.changeStatus = function (status) {
@@ -1294,10 +1308,12 @@
 	};
 
 	PlayerManagerAdapter.prototype._send = function (method, params) {
+	  if (!this.player) return;
 	  this.player.SendMessage(GAME_OBJECT, method, params);
 	};
 
 	PlayerManagerAdapter.prototype.applyEmotion = function (action, intensity) {
+	  if (!this.player) return;
 	  this.player.SendMessage(EMOTION_OBJECT, action, intensity);
 	};
 
@@ -1307,6 +1323,7 @@
 	};
 
 	PlayerManagerAdapter.prototype.setPersonalization = function (personalization) {
+	  if (!this.player) return;
 	  this.player.SendMessage(CUSTOMIZATION_OBJECT, "setURL", personalization);
 	};
 

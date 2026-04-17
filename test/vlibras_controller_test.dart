@@ -336,4 +336,19 @@ void main() {
       expect(controller.value.status, VLibrasStatus.error);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // VLibrasSpeed
+  // -------------------------------------------------------------------------
+  group('VLibrasSpeed', () {
+    test('has exactly 3 values', () {
+      expect(VLibrasSpeed.values, hasLength(3));
+    });
+
+    test('exposes multiplier 0.5 / 1.0 / 1.5', () {
+      expect(VLibrasSpeed.slow.multiplier, 0.5);
+      expect(VLibrasSpeed.normal.multiplier, 1.0);
+      expect(VLibrasSpeed.fast.multiplier, 1.5);
+    });
+  });
 }

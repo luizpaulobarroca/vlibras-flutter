@@ -1,5 +1,19 @@
 import 'package:flutter/foundation.dart';
 
+/// Playback speed presets accepted by the VLibras Unity player.
+///
+/// Values map to Unity's speed multiplier: 0.5x (slow), 1.0x (normal), 1.5x (fast).
+enum VLibrasSpeed {
+  slow(0.5),
+  normal(1.0),
+  fast(1.5);
+
+  const VLibrasSpeed(this.multiplier);
+
+  /// The raw speed multiplier passed to the Unity player.
+  final double multiplier;
+}
+
 /// The possible states of the VLibras translation lifecycle.
 enum VLibrasStatus {
   /// Controller created but [VLibrasController.initialize] not yet called.

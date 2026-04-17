@@ -8,12 +8,23 @@ void main() {
   late MockVLibrasPlatform platform;
   late VLibrasController controller;
 
+  setUpAll(() {
+    registerFallbackValue(VLibrasAvatar.icaro);
+  });
+
   setUp(() {
     platform = MockVLibrasPlatform();
     controller = VLibrasController(platform: platform);
     when(() => platform.initialize()).thenAnswer((_) async {});
     when(() => platform.translate(any())).thenAnswer((_) async {});
     when(() => platform.dispose()).thenReturn(null);
+    when(() => platform.pause()).thenAnswer((_) async {});
+    when(() => platform.stop()).thenAnswer((_) async {});
+    when(() => platform.resume()).thenAnswer((_) async {});
+    when(() => platform.repeat()).thenAnswer((_) async {});
+    when(() => platform.setSpeed(any())).thenAnswer((_) async {});
+    when(() => platform.setAvatar(any())).thenAnswer((_) async {});
+    when(() => platform.setSubtitles(any())).thenAnswer((_) async {});
   });
 
   tearDown(() {

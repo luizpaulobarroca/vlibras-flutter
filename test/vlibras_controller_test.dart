@@ -351,4 +351,19 @@ void main() {
       expect(VLibrasSpeed.fast.multiplier, 1.5);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // VLibrasAvatar
+  // -------------------------------------------------------------------------
+  group('VLibrasAvatar', () {
+    test('has exactly 3 values', () {
+      expect(VLibrasAvatar.values, hasLength(3));
+    });
+
+    test('exposes Unity ids icaro / hosana / guga', () {
+      expect(VLibrasAvatar.icaro.id, 'icaro');
+      expect(VLibrasAvatar.hosana.id, 'hosana');
+      expect(VLibrasAvatar.guga.id, 'guga');
+    });
+  });
 }

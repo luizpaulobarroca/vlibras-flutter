@@ -14,6 +14,20 @@ enum VLibrasSpeed {
   final double multiplier;
 }
 
+/// The avatar personas supported by the VLibras Unity player.
+///
+/// The [id] is the exact string expected by `player.changeAvatar(name)`.
+enum VLibrasAvatar {
+  icaro('icaro'),
+  hosana('hosana'),
+  guga('guga');
+
+  const VLibrasAvatar(this.id);
+
+  /// The string accepted by the Unity player's `changeAvatar` message.
+  final String id;
+}
+
 /// The possible states of the VLibras translation lifecycle.
 enum VLibrasStatus {
   /// Controller created but [VLibrasController.initialize] not yet called.

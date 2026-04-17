@@ -62,10 +62,22 @@ class VLibrasValue {
   /// or `null` otherwise.
   final String? error;
 
+  /// The current playback speed preset. Defaults to [VLibrasSpeed.normal].
+  final VLibrasSpeed speed;
+
+  /// The currently selected avatar persona. Defaults to [VLibrasAvatar.icaro].
+  final VLibrasAvatar avatar;
+
+  /// Whether subtitles are currently visible on the avatar view. Defaults to `true`.
+  final bool subtitlesEnabled;
+
   /// Creates a [VLibrasValue].
   const VLibrasValue({
     this.status = VLibrasStatus.idle,
     this.error,
+    this.speed = VLibrasSpeed.normal,
+    this.avatar = VLibrasAvatar.icaro,
+    this.subtitlesEnabled = true,
   });
 
   /// Whether this value contains an error message.
@@ -78,10 +90,16 @@ class VLibrasValue {
     VLibrasStatus? status,
     String? error,
     bool clearError = false,
+    VLibrasSpeed? speed,
+    VLibrasAvatar? avatar,
+    bool? subtitlesEnabled,
   }) {
     return VLibrasValue(
       status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
+      speed: speed ?? this.speed,
+      avatar: avatar ?? this.avatar,
+      subtitlesEnabled: subtitlesEnabled ?? this.subtitlesEnabled,
     );
   }
 
@@ -90,12 +108,21 @@ class VLibrasValue {
     if (identical(this, other)) return true;
     return other is VLibrasValue &&
         other.status == status &&
-        other.error == error;
+        other.error == error &&
+        other.speed == speed &&
+        other.avatar == avatar &&
+        other.subtitlesEnabled == subtitlesEnabled;
   }
 
   @override
-  int get hashCode => Object.hash(status, error);
+  int get hashCode =>
+      Object.hash(status, error, speed, avatar, subtitlesEnabled);
 
   @override
-  String toString() => 'VLibrasValue(status: $status, error: $error)';
+  String toString() => 'VLibrasValue('
+      'status: $status, '
+      'error: $error, '
+      'speed: $speed, '
+      'avatar: $avatar, '
+      'subtitlesEnabled: $subtitlesEnabled)';
 }

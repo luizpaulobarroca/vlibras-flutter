@@ -87,6 +87,42 @@ void main() {
       expect(a, isNot(equals(b)));
     });
 
+    test('default speed is normal', () {
+      const value = VLibrasValue();
+      expect(value.speed, VLibrasSpeed.normal);
+    });
+
+    test('default avatar is icaro', () {
+      const value = VLibrasValue();
+      expect(value.avatar, VLibrasAvatar.icaro);
+    });
+
+    test('subtitles enabled by default', () {
+      const value = VLibrasValue();
+      expect(value.subtitlesEnabled, isTrue);
+    });
+
+    test('two instances with same speed/avatar/subtitles are equal', () {
+      const a = VLibrasValue(
+        speed: VLibrasSpeed.fast,
+        avatar: VLibrasAvatar.hosana,
+        subtitlesEnabled: false,
+      );
+      const b = VLibrasValue(
+        speed: VLibrasSpeed.fast,
+        avatar: VLibrasAvatar.hosana,
+        subtitlesEnabled: false,
+      );
+      expect(a, equals(b));
+      expect(a.hashCode, equals(b.hashCode));
+    });
+
+    test('instances with different speed are not equal', () {
+      const a = VLibrasValue(speed: VLibrasSpeed.slow);
+      const b = VLibrasValue(speed: VLibrasSpeed.fast);
+      expect(a, isNot(equals(b)));
+    });
+
     group('copyWith', () {
       test('changes status while preserving error', () {
         const original =
@@ -115,6 +151,33 @@ void main() {
         const original = VLibrasValue(status: VLibrasStatus.ready);
         final copy = original.copyWith();
         expect(copy, equals(original));
+      });
+
+      test('changes speed while preserving other fields', () {
+        const original = VLibrasValue(
+          status: VLibrasStatus.ready,
+          avatar: VLibrasAvatar.guga,
+          subtitlesEnabled: false,
+        );
+        final copy = original.copyWith(speed: VLibrasSpeed.fast);
+        expect(copy.speed, VLibrasSpeed.fast);
+        expect(copy.status, VLibrasStatus.ready);
+        expect(copy.avatar, VLibrasAvatar.guga);
+        expect(copy.subtitlesEnabled, isFalse);
+      });
+
+      test('changes avatar while preserving other fields', () {
+        const original = VLibrasValue(speed: VLibrasSpeed.slow);
+        final copy = original.copyWith(avatar: VLibrasAvatar.hosana);
+        expect(copy.avatar, VLibrasAvatar.hosana);
+        expect(copy.speed, VLibrasSpeed.slow);
+      });
+
+      test('changes subtitlesEnabled while preserving other fields', () {
+        const original = VLibrasValue(avatar: VLibrasAvatar.guga);
+        final copy = original.copyWith(subtitlesEnabled: false);
+        expect(copy.subtitlesEnabled, isFalse);
+        expect(copy.avatar, VLibrasAvatar.guga);
       });
     });
   });

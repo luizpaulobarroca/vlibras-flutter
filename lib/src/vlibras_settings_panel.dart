@@ -126,15 +126,11 @@ class VLibrasSettingsPanel extends StatelessWidget {
         const Icon(Icons.person_outline, size: 20),
         const SizedBox(width: 8),
         Expanded(child: Text(labels.avatar)),
-        DropdownButton<VLibrasAvatar>(
+        VLibrasInlineDropdown<VLibrasAvatar>(
           value: value.avatar,
-          onChanged: (next) {
-            if (next != null) controller.setAvatar(next);
-          },
-          items: [
-            for (final a in VLibrasAvatar.values)
-              DropdownMenuItem(value: a, child: Text(labelFor(a))),
-          ],
+          items: VLibrasAvatar.values,
+          labelFor: labelFor,
+          onChanged: controller.setAvatar,
         ),
       ],
     );
@@ -150,6 +146,89 @@ class VLibrasSettingsPanel extends StatelessWidget {
           value: value.subtitlesEnabled,
           onChanged: controller.setSubtitles,
         ),
+      ],
+    );
+  }
+}
+
+/// A compact inline dropdown that does not depend on [Navigator]/[Overlay].
+///
+/// Exposed because [VLibrasSettingsPanel] is often mounted via
+/// `MaterialApp.builder`, which places it above the app's [Navigator] — so
+/// Material's [DropdownButton] cannot find a [Navigator] ancestor and crashes
+/// when the menu is opened. This widget expands its option list in-place.
+class VLibrasInlineDropdown<T> extends StatefulWidget {
+  const VLibrasInlineDropdown({
+    super.key,
+    required this.value,
+    required this.items,
+    required this.labelFor,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<T> items;
+  final String Function(T) labelFor;
+  final ValueChanged<T> onChanged;
+
+  @override
+  State<VLibrasInlineDropdown<T>> createState() =>
+      _VLibrasInlineDropdownState<T>();
+}
+
+class _VLibrasInlineDropdownState<T> extends State<VLibrasInlineDropdown<T>> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(widget.labelFor(widget.value)),
+                Icon(_open ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+              ],
+            ),
+          ),
+        ),
+        if (_open)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.dividerColor),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final item in widget.items)
+                  InkWell(
+                    onTap: () {
+                      widget.onChanged(item);
+                      setState(() => _open = false);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      color: item == widget.value
+                          ? theme.colorScheme.primaryContainer
+                          : null,
+                      child: Text(widget.labelFor(item)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
       ],
     );
   }

@@ -73,10 +73,10 @@ void main() {
     testWidgets('selecting Hosana from dropdown calls setAvatar(hosana)',
         (tester) async {
       await pumpPanel(tester);
-      final dropdown =
-          tester.widget<DropdownButton<VLibrasAvatar>>(
-              find.byType(DropdownButton<VLibrasAvatar>));
-      dropdown.onChanged!(VLibrasAvatar.hosana);
+      // Open the dropdown and tap "Hosana".
+      await tester.tap(find.text('Ícaro')); // current value opens the menu
+      await tester.pump();
+      await tester.tap(find.text('Hosana'));
       await tester.pump();
       verify(() => platform.setAvatar(VLibrasAvatar.hosana)).called(1);
     });

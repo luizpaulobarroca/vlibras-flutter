@@ -160,6 +160,32 @@ class VLibrasController extends ChangeNotifier
   /// Repeats the last translation from the beginning.
   Future<void> repeat() => _guardedCall(_platform.repeat, 'repeat');
 
+  /// Sets the avatar animation speed preset.
+  ///
+  /// Called before [initialize()] completes: updates [value.speed] only —
+  /// the platform is synced at the end of [initialize()].
+  Future<void> setSpeed(VLibrasSpeed speed) async {
+    if (!_isReadyForPlatform) {
+      _setValue(_value.copyWith(speed: speed));
+      return;
+    }
+    try {
+      await _platform.setSpeed(speed.multiplier);
+      _setValue(_value.copyWith(speed: speed, clearError: true));
+    } catch (e) {
+      debugPrint('[VLibrasController] setSpeed error: $e');
+      _setValue(_value.copyWith(
+        status: VLibrasStatus.error,
+        error: 'Falha em setSpeed: $e',
+      ));
+    }
+  }
+
+  bool get _isReadyForPlatform =>
+      _value.status == VLibrasStatus.ready ||
+      _value.status == VLibrasStatus.translating ||
+      _value.status == VLibrasStatus.playing;
+
   /// Runs [action] and captures any thrown error into [VLibrasValue.error].
   Future<void> _guardedCall(
     Future<void> Function() action,

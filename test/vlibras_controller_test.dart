@@ -476,4 +476,30 @@ void main() {
       expect(controller.value.error, contains('boom'));
     });
   });
+
+  // -------------------------------------------------------------------------
+  // setSpeed
+  // -------------------------------------------------------------------------
+  group('setSpeed', () {
+    setUp(() async {
+      await controller.initialize();
+    });
+
+    test('delegates to platform with the multiplier', () async {
+      await controller.setSpeed(VLibrasSpeed.fast);
+      verify(() => platform.setSpeed(1.5)).called(1);
+    });
+
+    test('updates value.speed', () async {
+      await controller.setSpeed(VLibrasSpeed.slow);
+      expect(controller.value.speed, VLibrasSpeed.slow);
+    });
+
+    test('platform error is captured in value.error', () async {
+      when(() => platform.setSpeed(any())).thenThrow(Exception('no go'));
+      await controller.setSpeed(VLibrasSpeed.fast);
+      expect(controller.value.status, VLibrasStatus.error);
+      expect(controller.value.speed, VLibrasSpeed.normal);
+    });
+  });
 }

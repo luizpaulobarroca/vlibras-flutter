@@ -199,6 +199,25 @@ class VLibrasController extends ChangeNotifier
     }
   }
 
+  /// Enables or disables subtitles. No-op when already in the desired state.
+  Future<void> setSubtitles(bool enabled) async {
+    if (_value.subtitlesEnabled == enabled) return;
+    if (!_isReadyForPlatform) {
+      _setValue(_value.copyWith(subtitlesEnabled: enabled));
+      return;
+    }
+    try {
+      await _platform.setSubtitles(enabled);
+      _setValue(_value.copyWith(subtitlesEnabled: enabled, clearError: true));
+    } catch (e) {
+      debugPrint('[VLibrasController] setSubtitles error: $e');
+      _setValue(_value.copyWith(
+        status: VLibrasStatus.error,
+        error: 'Falha em setSubtitles: $e',
+      ));
+    }
+  }
+
   bool get _isReadyForPlatform =>
       _value.status == VLibrasStatus.ready ||
       _value.status == VLibrasStatus.translating ||

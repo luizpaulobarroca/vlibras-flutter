@@ -528,4 +528,36 @@ void main() {
       expect(controller.value.avatar, VLibrasAvatar.icaro);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // setSubtitles
+  // -------------------------------------------------------------------------
+  group('setSubtitles', () {
+    setUp(() async {
+      await controller.initialize();
+    });
+
+    test('no-op when desired state equals current', () async {
+      // default subtitlesEnabled is true; calling with true should not toggle.
+      await controller.setSubtitles(true);
+      verifyNever(() => platform.setSubtitles(any()));
+    });
+
+    test('delegates to platform when state differs', () async {
+      await controller.setSubtitles(false);
+      verify(() => platform.setSubtitles(false)).called(1);
+    });
+
+    test('updates value.subtitlesEnabled', () async {
+      await controller.setSubtitles(false);
+      expect(controller.value.subtitlesEnabled, isFalse);
+    });
+
+    test('platform error is captured in value.error', () async {
+      when(() => platform.setSubtitles(any())).thenThrow(Exception('nope'));
+      await controller.setSubtitles(false);
+      expect(controller.value.status, VLibrasStatus.error);
+      expect(controller.value.subtitlesEnabled, isTrue);
+    });
+  });
 }

@@ -502,4 +502,30 @@ void main() {
       expect(controller.value.speed, VLibrasSpeed.normal);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // setAvatar
+  // -------------------------------------------------------------------------
+  group('setAvatar', () {
+    setUp(() async {
+      await controller.initialize();
+    });
+
+    test('delegates to platform with selected avatar', () async {
+      await controller.setAvatar(VLibrasAvatar.hosana);
+      verify(() => platform.setAvatar(VLibrasAvatar.hosana)).called(1);
+    });
+
+    test('updates value.avatar', () async {
+      await controller.setAvatar(VLibrasAvatar.guga);
+      expect(controller.value.avatar, VLibrasAvatar.guga);
+    });
+
+    test('platform error is captured in value.error', () async {
+      when(() => platform.setAvatar(any())).thenThrow(Exception('fail'));
+      await controller.setAvatar(VLibrasAvatar.hosana);
+      expect(controller.value.status, VLibrasStatus.error);
+      expect(controller.value.avatar, VLibrasAvatar.icaro);
+    });
+  });
 }

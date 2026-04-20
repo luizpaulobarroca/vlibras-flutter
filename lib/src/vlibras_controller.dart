@@ -181,6 +181,24 @@ class VLibrasController extends ChangeNotifier
     }
   }
 
+  /// Switches the active avatar persona.
+  Future<void> setAvatar(VLibrasAvatar avatar) async {
+    if (!_isReadyForPlatform) {
+      _setValue(_value.copyWith(avatar: avatar));
+      return;
+    }
+    try {
+      await _platform.setAvatar(avatar);
+      _setValue(_value.copyWith(avatar: avatar, clearError: true));
+    } catch (e) {
+      debugPrint('[VLibrasController] setAvatar error: $e');
+      _setValue(_value.copyWith(
+        status: VLibrasStatus.error,
+        error: 'Falha em setAvatar: $e',
+      ));
+    }
+  }
+
   bool get _isReadyForPlatform =>
       _value.status == VLibrasStatus.ready ||
       _value.status == VLibrasStatus.translating ||

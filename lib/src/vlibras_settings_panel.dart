@@ -77,28 +77,38 @@ class VLibrasSettingsPanel extends StatelessWidget {
   }
 
   Widget _buildSpeedSection(VLibrasValue value) {
+    final currentLabel = switch (value.speed) {
+      VLibrasSpeed.slow => labels.speedSlow,
+      VLibrasSpeed.normal => labels.speedNormal,
+      VLibrasSpeed.fast => labels.speedFast,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(labels.speed),
-        const SizedBox(height: 8),
-        SegmentedButton<VLibrasSpeed>(
-          segments: [
-            ButtonSegment(
-              value: VLibrasSpeed.slow,
-              label: Text(labels.speedSlow),
-            ),
-            ButtonSegment(
-              value: VLibrasSpeed.normal,
-              label: Text(labels.speedNormal),
-            ),
-            ButtonSegment(
-              value: VLibrasSpeed.fast,
-              label: Text(labels.speedFast),
+        Row(
+          children: [
+            Expanded(child: Text(labels.speed)),
+            Text(
+              currentLabel,
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ],
-          selected: {value.speed},
-          onSelectionChanged: (s) => controller.setSpeed(s.first),
+        ),
+        Row(
+          children: [
+            const Icon(Icons.directions_walk, size: 20),
+            Expanded(
+              child: Slider(
+                min: 0,
+                max: (VLibrasSpeed.values.length - 1).toDouble(),
+                divisions: VLibrasSpeed.values.length - 1,
+                value: value.speed.index.toDouble(),
+                onChanged: (v) =>
+                    controller.setSpeed(VLibrasSpeed.values[v.round()]),
+              ),
+            ),
+            const Icon(Icons.directions_run, size: 20),
+          ],
         ),
       ],
     );
@@ -135,6 +145,8 @@ class VLibrasSettingsPanel extends StatelessWidget {
   Widget _buildSubtitlesSection(VLibrasValue value) {
     return Row(
       children: [
+        const Icon(Icons.closed_caption, size: 20),
+        const SizedBox(width: 8),
         Expanded(child: Text(labels.subtitles)),
         Switch(
           value: value.subtitlesEnabled,

@@ -54,11 +54,20 @@ void main() {
       expect(find.text('Legendas'), findsOneWidget);
     });
 
-    testWidgets('tapping "Rápido" calls setSpeed(fast)', (tester) async {
+    testWidgets('speed slider at max calls setSpeed(fast)', (tester) async {
       await pumpPanel(tester);
-      await tester.tap(find.text('Rápido'));
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      slider.onChanged!(2.0); // VLibrasSpeed.fast (index 2)
       await tester.pump();
       verify(() => platform.setSpeed(1.5)).called(1);
+    });
+
+    testWidgets('speed slider reflects current value', (tester) async {
+      await pumpPanel(tester);
+      // Default is normal → index 1.
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      expect(slider.value, 1.0);
+      expect(find.text('Normal'), findsOneWidget);
     });
 
     testWidgets('tapping "Hosana" calls setAvatar(hosana)', (tester) async {

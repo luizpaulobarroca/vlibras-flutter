@@ -172,6 +172,8 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
       }
     });
     function vlibrasTranslate(t) { if (player) player.translate(t); }
+    function vlibrasChangeAvatar(name) { if (player) player.changeAvatar(name); }
+    function vlibrasToggleSubtitle() { if (player) player.toggleSubtitle(); }
   </script>
 </body>
 </html>
@@ -241,6 +243,14 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   @override
   Future<void> setSpeed(double speed) =>
       _controller.runJavaScript('if(player)player.setSpeed($speed)');
+
+  @override
+  Future<void> setAvatar(VLibrasAvatar avatar) =>
+      _controller.runJavaScript('vlibrasChangeAvatar("${avatar.id}")');
+
+  @override
+  Future<void> setSubtitles(bool enabled) =>
+      _controller.runJavaScript('vlibrasToggleSubtitle()');
 
   @override
   void dispose() {

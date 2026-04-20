@@ -22,6 +22,10 @@ class FakeMobilePlatform implements VLibrasPlatform {
   @override
   Future<void> setSpeed(double speed) async {}
   @override
+  Future<void> setAvatar(VLibrasAvatar avatar) async {}
+  @override
+  Future<void> setSubtitles(bool enabled) async {}
+  @override
   void dispose() {}
 
   Widget buildView() => const SizedBox.shrink(key: Key('vlibras-mobile-view'));

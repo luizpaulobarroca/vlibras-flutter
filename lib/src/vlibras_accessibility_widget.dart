@@ -125,7 +125,7 @@ class _VLibrasAccessibilityWidgetState
                 onTap: () => setState(() => _isExpanded = true),
                 child: const Icon(
                   Icons.accessibility_new,
-                  color: Colors.white,
+                  color: Colors.black,
                 ),
               ),
             ),
@@ -202,7 +202,7 @@ class _VLibrasAccessibilityWidgetState
                       button: true,
                       child: IconButton(
                         icon:
-                            const Icon(Icons.settings, color: Colors.white),
+                            const Icon(Icons.settings, color: Colors.black),
                         onPressed: () => setState(
                             () => _isSettingsOpen = !_isSettingsOpen),
                       ),
@@ -211,7 +211,7 @@ class _VLibrasAccessibilityWidgetState
                     label: widget.settingsLabels.close,
                     button: true,
                     child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      icon: const Icon(Icons.close, color: Colors.black),
                       onPressed: () => setState(() {
                         _isExpanded = false;
                         _isSettingsOpen = false;

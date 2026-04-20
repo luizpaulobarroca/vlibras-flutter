@@ -70,9 +70,13 @@ void main() {
       expect(find.text('Normal'), findsOneWidget);
     });
 
-    testWidgets('tapping "Hosana" calls setAvatar(hosana)', (tester) async {
+    testWidgets('selecting Hosana from dropdown calls setAvatar(hosana)',
+        (tester) async {
       await pumpPanel(tester);
-      await tester.tap(find.text('Hosana'));
+      final dropdown =
+          tester.widget<DropdownButton<VLibrasAvatar>>(
+              find.byType(DropdownButton<VLibrasAvatar>));
+      dropdown.onChanged!(VLibrasAvatar.hosana);
       await tester.pump();
       verify(() => platform.setAvatar(VLibrasAvatar.hosana)).called(1);
     });

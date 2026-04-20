@@ -115,29 +115,27 @@ class VLibrasSettingsPanel extends StatelessWidget {
   }
 
   Widget _buildAvatarSection(VLibrasValue value) {
-    Widget radio(VLibrasAvatar a, String label) => Expanded(
-          child: RadioListTile<VLibrasAvatar>(
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-            title: Text(label),
-            value: a,
-            groupValue: value.avatar,
-            onChanged: (next) {
-              if (next != null) controller.setAvatar(next);
-            },
-          ),
-        );
+    String labelFor(VLibrasAvatar a) => switch (a) {
+          VLibrasAvatar.icaro => labels.avatarIcaro,
+          VLibrasAvatar.hosana => labels.avatarHosana,
+          VLibrasAvatar.guga => labels.avatarGuga,
+        };
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Row(
       children: [
-        Text(labels.avatar),
-        const SizedBox(height: 8),
-        Row(children: [
-          radio(VLibrasAvatar.icaro, labels.avatarIcaro),
-          radio(VLibrasAvatar.hosana, labels.avatarHosana),
-          radio(VLibrasAvatar.guga, labels.avatarGuga),
-        ]),
+        const Icon(Icons.person_outline, size: 20),
+        const SizedBox(width: 8),
+        Expanded(child: Text(labels.avatar)),
+        DropdownButton<VLibrasAvatar>(
+          value: value.avatar,
+          onChanged: (next) {
+            if (next != null) controller.setAvatar(next);
+          },
+          items: [
+            for (final a in VLibrasAvatar.values)
+              DropdownMenuItem(value: a, child: Text(labelFor(a))),
+          ],
+        ),
       ],
     );
   }

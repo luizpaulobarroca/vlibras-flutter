@@ -64,10 +64,13 @@ class VLibrasSettingsPanel extends StatelessWidget {
       children: [
         Expanded(child: Text(labels.title, style: titleStyle)),
         if (onClose != null)
-          IconButton(
-            tooltip: labels.close,
-            icon: const Icon(Icons.close),
-            onPressed: onClose,
+          Semantics(
+            label: labels.close,
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: onClose,
+            ),
           ),
       ],
     );

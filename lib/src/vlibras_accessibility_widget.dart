@@ -197,19 +197,26 @@ class _VLibrasAccessibilityWidgetState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (widget.showSettingsButton)
-                    IconButton(
-                      tooltip: widget.settingsLabels.title,
-                      icon: const Icon(Icons.settings, color: Colors.white),
-                      onPressed: () => setState(
-                          () => _isSettingsOpen = !_isSettingsOpen),
+                    Semantics(
+                      label: widget.settingsLabels.title,
+                      button: true,
+                      child: IconButton(
+                        icon:
+                            const Icon(Icons.settings, color: Colors.white),
+                        onPressed: () => setState(
+                            () => _isSettingsOpen = !_isSettingsOpen),
+                      ),
                     ),
-                  IconButton(
-                    tooltip: widget.settingsLabels.close,
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => setState(() {
-                      _isExpanded = false;
-                      _isSettingsOpen = false;
-                    }),
+                  Semantics(
+                    label: widget.settingsLabels.close,
+                    button: true,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => setState(() {
+                        _isExpanded = false;
+                        _isSettingsOpen = false;
+                      }),
+                    ),
                   ),
                 ],
               ),

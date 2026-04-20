@@ -37,6 +37,10 @@ class FakePlayer implements VLibrasPlayerAdapter {
   void repeat() {}
   @override
   void setSpeed(double speed) {}
+  @override
+  void changeAvatar(String _) {}
+  @override
+  void toggleSubtitle() {}
 
   /// Fire a registered event synchronously.
   void fire(String event) {

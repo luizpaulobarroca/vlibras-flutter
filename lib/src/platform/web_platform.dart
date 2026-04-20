@@ -74,6 +74,12 @@ class _WebPlayerAdapter implements VLibrasPlayerAdapter {
   void setSpeed(double speed) => _instance.setSpeed(speed);
 
   @override
+  void changeAvatar(String avatarName) => _instance.changeAvatar(avatarName);
+
+  @override
+  void toggleSubtitle() => _instance.toggleSubtitle();
+
+  @override
   void on(String event, void Function() callback) {
     final jsCallback = callback.toJS;
     _jsCallbacks[event] = jsCallback;

@@ -24,6 +24,8 @@ extension type VLibrasPlayerInstance._(JSObject _) implements JSObject {
   @JS('continue') external void resume();
   external void repeat();
   external void setSpeed(double speed);
+  external void changeAvatar(String avatarName);
+  external void toggleSubtitle();
   external void on(String event, JSFunction callback);
   external void off(String event, JSFunction callback);
 }

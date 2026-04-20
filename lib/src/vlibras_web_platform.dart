@@ -35,6 +35,12 @@ abstract class VLibrasPlayerAdapter {
   /// Sets the animation playback [speed] (e.g., 1.0 = normal, 0.5 = half speed).
   void setSpeed(double speed);
 
+  /// Changes the active avatar to [avatarName].
+  void changeAvatar(String avatarName);
+
+  /// Toggles subtitles on/off on the Unity player (no explicit setter exists).
+  void toggleSubtitle();
+
   /// Register a plain-Dart callback for [event].
   void on(String event, void Function() callback);
 
@@ -133,6 +139,13 @@ class VLibrasWebPlatform implements VLibrasPlatform {
 
   @override
   Future<void> setSpeed(double speed) async => _player?.setSpeed(speed);
+
+  @override
+  Future<void> setAvatar(VLibrasAvatar avatar) async =>
+      _player?.changeAvatar(avatar.id);
+
+  @override
+  Future<void> setSubtitles(bool enabled) async => _player?.toggleSubtitle();
 
   @override
   void dispose() {

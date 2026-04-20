@@ -603,4 +603,66 @@ void main() {
       c.dispose();
     });
   });
+
+  // -------------------------------------------------------------------------
+  // initialSettings
+  // -------------------------------------------------------------------------
+  group('initialSettings', () {
+    test('is applied before transitioning to ready', () async {
+      final states = <VLibrasStatus>[];
+      final applyOrder = <String>[];
+      when(() => platform.setSpeed(any())).thenAnswer((inv) async {
+        applyOrder.add('speed');
+      });
+      when(() => platform.setAvatar(any())).thenAnswer((inv) async {
+        applyOrder.add('avatar');
+      });
+      when(() => platform.setSubtitles(any())).thenAnswer((inv) async {
+        applyOrder.add('subtitles');
+      });
+
+      final c = VLibrasController(
+        platform: platform,
+        initialSettings: const VLibrasSettings(
+          speed: VLibrasSpeed.fast,
+          avatar: VLibrasAvatar.hosana,
+          subtitlesEnabled: false,
+        ),
+      );
+      c.addListener(() => states.add(c.value.status));
+      await c.initialize();
+
+      expect(states.last, VLibrasStatus.ready);
+      expect(c.value.speed, VLibrasSpeed.fast);
+      expect(c.value.avatar, VLibrasAvatar.hosana);
+      expect(c.value.subtitlesEnabled, isFalse);
+      expect(applyOrder, ['speed', 'avatar', 'subtitles']);
+      c.dispose();
+    });
+
+    test('does NOT invoke onSettingsChanged during initial application',
+        () async {
+      final captured = <VLibrasSettings>[];
+      final c = VLibrasController(
+        platform: platform,
+        initialSettings: const VLibrasSettings(speed: VLibrasSpeed.slow),
+        onSettingsChanged: captured.add,
+      );
+      await c.initialize();
+      expect(captured, isEmpty);
+      c.dispose();
+    });
+
+    test('errors during initial application are logged but do not fail init',
+        () async {
+      when(() => platform.setSpeed(any())).thenThrow(Exception('oops'));
+      final c = VLibrasController(
+        platform: platform,
+        initialSettings: const VLibrasSettings(speed: VLibrasSpeed.fast),
+      );
+      await c.initialize();
+      expect(c.value.status, VLibrasStatus.ready);
+      c.dispose();
+    });
+  });
 }

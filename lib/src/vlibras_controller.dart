@@ -93,6 +93,38 @@ class VLibrasController extends ChangeNotifier
     ));
   }
 
+  /// Pushes the current speed/avatar/subtitles from [_value] to the platform.
+  ///
+  /// Called once during [initialize()] after the platform reports it is up.
+  /// Errors are logged but swallowed — a lost default is better than a broken
+  /// init. [onSettingsChanged] is NOT invoked during the sync (guarded by
+  /// [_applyingInitial]).
+  Future<void> _syncValueToPlatform() async {
+    _applyingInitial = true;
+    try {
+      try {
+        await _platform.setSpeed(_value.speed.multiplier);
+      } catch (e) {
+        debugPrint('[VLibrasController] sync setSpeed error: $e');
+      }
+      try {
+        await _platform.setAvatar(_value.avatar);
+      } catch (e) {
+        debugPrint('[VLibrasController] sync setAvatar error: $e');
+      }
+      // subtitles default is `true` on a fresh player — only toggle if we want false
+      if (!_value.subtitlesEnabled) {
+        try {
+          await _platform.setSubtitles(false);
+        } catch (e) {
+          debugPrint('[VLibrasController] sync setSubtitles error: $e');
+        }
+      }
+    } finally {
+      _applyingInitial = false;
+    }
+  }
+
   /// Forwards platform status callbacks to the controller's value.
   void _onPlatformStatus(VLibrasStatus status) {
     _setValue(_value.copyWith(status: status));
@@ -111,6 +143,7 @@ class VLibrasController extends ChangeNotifier
     _setValue(_value.copyWith(status: VLibrasStatus.initializing));
     try {
       await _platform.initialize();
+      await _syncValueToPlatform();
       _setValue(_value.copyWith(
         status: VLibrasStatus.ready,
         clearError: true,

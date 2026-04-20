@@ -105,6 +105,38 @@ class _MyWidgetState extends State<MyWidget> {
 | `playing` | Avatar animando a tradução |
 | `error` | Erro — veja `VLibrasValue.error` |
 
+## Persisting user preferences
+
+`VLibrasController` does not bundle a persistence backend. To save the user's
+speed, avatar and subtitle choices across app launches, wire two optional
+constructor parameters and plug in a package of your choice (for example
+`shared_preferences`):
+
+```dart
+Future<VLibrasSettings> _loadSettings() async {
+  final prefs = await SharedPreferences.getInstance();
+  final raw = prefs.getString('vlibras_settings');
+  if (raw == null) return const VLibrasSettings();
+  return VLibrasSettings.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+}
+
+Future<void> _saveSettings(VLibrasSettings settings) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('vlibras_settings', jsonEncode(settings.toJson()));
+}
+
+final controller = VLibrasController(
+  initialSettings: await _loadSettings(),
+  onSettingsChanged: _saveSettings,
+);
+await controller.initialize();
+```
+
+`onSettingsChanged` is invoked only after the underlying player accepts a
+change, so callbacks never persist an intermediate or rejected state.
+`initialSettings` is applied before the controller first reports `ready`,
+so the first observed state already reflects the user's preferences.
+
 ## Licença
 
 MIT — veja [LICENSE](LICENSE)

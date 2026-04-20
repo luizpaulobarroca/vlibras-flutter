@@ -440,4 +440,40 @@ void main() {
       expect(VLibrasAvatar.guga.id, 'guga');
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Playback controls
+  // -------------------------------------------------------------------------
+  group('playback controls', () {
+    setUp(() async {
+      await controller.initialize();
+    });
+
+    test('pause() delegates to platform', () async {
+      await controller.pause();
+      verify(() => platform.pause()).called(1);
+    });
+
+    test('stop() delegates to platform', () async {
+      await controller.stop();
+      verify(() => platform.stop()).called(1);
+    });
+
+    test('resume() delegates to platform', () async {
+      await controller.resume();
+      verify(() => platform.resume()).called(1);
+    });
+
+    test('repeat() delegates to platform', () async {
+      await controller.repeat();
+      verify(() => platform.repeat()).called(1);
+    });
+
+    test('platform error in pause() is captured in value.error', () async {
+      when(() => platform.pause()).thenThrow(Exception('boom'));
+      await controller.pause();
+      expect(controller.value.status, VLibrasStatus.error);
+      expect(controller.value.error, contains('boom'));
+    });
+  });
 }

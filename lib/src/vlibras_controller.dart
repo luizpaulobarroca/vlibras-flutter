@@ -148,8 +148,33 @@ class VLibrasController extends ChangeNotifier
     return (_platform as dynamic).buildView() as Widget;
   }
 
-  // Phase 3 will add pause(), stop(), resume(), repeat(), setSpeed() by
-  // delegating to _platform and managing state transitions accordingly.
+  /// Pauses the current animation. Errors are captured in [VLibrasValue.error].
+  Future<void> pause() => _guardedCall(_platform.pause, 'pause');
+
+  /// Stops the current animation and resets player state.
+  Future<void> stop() => _guardedCall(_platform.stop, 'stop');
+
+  /// Resumes a paused animation.
+  Future<void> resume() => _guardedCall(_platform.resume, 'resume');
+
+  /// Repeats the last translation from the beginning.
+  Future<void> repeat() => _guardedCall(_platform.repeat, 'repeat');
+
+  /// Runs [action] and captures any thrown error into [VLibrasValue.error].
+  Future<void> _guardedCall(
+    Future<void> Function() action,
+    String label,
+  ) async {
+    try {
+      await action();
+    } catch (e) {
+      debugPrint('[VLibrasController] $label error: $e');
+      _setValue(_value.copyWith(
+        status: VLibrasStatus.error,
+        error: 'Falha em $label: $e',
+      ));
+    }
+  }
 
   @override
   void dispose() {

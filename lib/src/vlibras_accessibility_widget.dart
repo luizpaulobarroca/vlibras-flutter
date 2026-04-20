@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'vlibras_controller.dart';
+import 'vlibras_settings_labels.dart';
+import 'vlibras_settings_panel.dart';
 import 'vlibras_view.dart';
 import 'vlibras_value.dart';
 
@@ -35,6 +37,8 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
     this.avatarWidth = 280.0,
     this.avatarHeight = 320.0,
     this.buttonSize = 56.0,
+    this.showSettingsButton = true,
+    this.settingsLabels = const VLibrasSettingsLabels(),
   });
 
   /// The app content to wrap. Text taps on this subtree trigger translation.
@@ -49,6 +53,14 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
   /// Size of the collapsed floating button. Defaults to 56.
   final double buttonSize;
 
+  /// When `true` (default), a secondary ⚙️ button is rendered alongside the
+  /// close button while the avatar panel is open. Tapping it reveals a
+  /// [VLibrasSettingsPanel] overlay inline with the avatar.
+  final bool showSettingsButton;
+
+  /// Labels passed to the internal [VLibrasSettingsPanel]. Override for i18n.
+  final VLibrasSettingsLabels settingsLabels;
+
   @override
   State<VLibrasAccessibilityWidget> createState() =>
       _VLibrasAccessibilityWidgetState();
@@ -58,6 +70,7 @@ class _VLibrasAccessibilityWidgetState
     extends State<VLibrasAccessibilityWidget> {
   late final VLibrasController _controller;
   bool _isExpanded = false;
+  bool _isSettingsOpen = false;
 
   @override
   void initState() {
@@ -143,10 +156,7 @@ class _VLibrasAccessibilityWidgetState
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // VLibrasView must always be in the tree when expanded so that
-            // onElementCreated fires and attachToElement initialises the player.
             VLibrasView(controller: _controller),
-            // Loading overlay — shown while Unity WebGL loads from CDN.
             if (isLoading)
               const ColoredBox(
                 color: Colors.black87,
@@ -164,7 +174,6 @@ class _VLibrasAccessibilityWidgetState
                   ),
                 ),
               ),
-            // Error overlay
             if (value.status == VLibrasStatus.error)
               ColoredBox(
                 color: Colors.black87,
@@ -173,21 +182,54 @@ class _VLibrasAccessibilityWidgetState
                     padding: const EdgeInsets.all(16),
                     child: Text(
                       value.error ?? 'Erro ao carregar',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.redAccent, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ),
               ),
-            // Close button — always on top
+            // Top-right action buttons
             Positioned(
               top: 8,
               right: 8,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => setState(() => _isExpanded = false),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.showSettingsButton)
+                    IconButton(
+                      tooltip: widget.settingsLabels.title,
+                      icon: const Icon(Icons.settings, color: Colors.white),
+                      onPressed: () => setState(
+                          () => _isSettingsOpen = !_isSettingsOpen),
+                    ),
+                  IconButton(
+                    tooltip: widget.settingsLabels.close,
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => setState(() {
+                      _isExpanded = false;
+                      _isSettingsOpen = false;
+                    }),
+                  ),
+                ],
               ),
             ),
+            // Settings panel overlay
+            if (_isSettingsOpen)
+              Positioned(
+                left: 8,
+                right: 8,
+                bottom: 8,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(16),
+                  child: VLibrasSettingsPanel(
+                    controller: _controller,
+                    labels: widget.settingsLabels,
+                    onClose: () => setState(() => _isSettingsOpen = false),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -15,3 +15,4 @@ export 'src/vlibras_platform.dart';
 export 'src/vlibras_controller.dart';
 export 'src/vlibras_view.dart';
 export 'src/vlibras_accessibility_widget.dart';
+export 'src/vlibras_settings_panel.dart';

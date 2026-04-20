@@ -12,7 +12,7 @@ import 'vlibras_value.dart';
 /// Place this widget inside a [Dialog], [BottomSheet], [Drawer] or your own
 /// [Overlay]. It has an intrinsic width of ~320dp and vertical size driven
 /// by content.
-class VLibrasSettingsPanel extends StatelessWidget {
+class VLibrasSettingsPanel extends StatefulWidget {
   const VLibrasSettingsPanel({
     super.key,
     required this.controller,
@@ -30,28 +30,58 @@ class VLibrasSettingsPanel extends StatelessWidget {
   final VLibrasSettingsLabels labels;
 
   @override
+  State<VLibrasSettingsPanel> createState() => _VLibrasSettingsPanelState();
+}
+
+class _VLibrasSettingsPanelState extends State<VLibrasSettingsPanel> {
+  final LayerLink _avatarLink = LayerLink();
+  bool _avatarOpen = false;
+
+  String _avatarLabelFor(VLibrasAvatar a) => switch (a) {
+        VLibrasAvatar.icaro => widget.labels.avatarIcaro,
+        VLibrasAvatar.hosana => widget.labels.avatarHosana,
+        VLibrasAvatar.guga => widget.labels.avatarGuga,
+      };
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: controller,
+      listenable: widget.controller,
       builder: (context, _) {
-        final value = controller.value;
+        final value = widget.controller.value;
         return SizedBox(
           width: 320,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 16),
-                _buildSpeedSection(value),
-                const SizedBox(height: 16),
-                _buildAvatarSection(value),
-                const SizedBox(height: 16),
-                _buildSubtitlesSection(value),
-              ],
-            ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(context),
+                    const SizedBox(height: 16),
+                    _buildSpeedSection(value),
+                    const SizedBox(height: 16),
+                    _buildAvatarSection(value),
+                    const SizedBox(height: 16),
+                    _buildSubtitlesSection(value),
+                  ],
+                ),
+              ),
+              // Floating avatar dropdown list — rendered LAST so it paints on
+              // top of the subtitles row. Does not contribute to the Stack's
+              // natural size because it follows the target via LayerLink.
+              if (_avatarOpen)
+                CompositedTransformFollower(
+                  link: _avatarLink,
+                  targetAnchor: Alignment.bottomRight,
+                  followerAnchor: Alignment.topRight,
+                  offset: const Offset(0, 4),
+                  child: _buildAvatarList(value),
+                ),
+            ],
           ),
         );
       },
@@ -62,14 +92,14 @@ class VLibrasSettingsPanel extends StatelessWidget {
     final titleStyle = Theme.of(context).textTheme.titleMedium;
     return Row(
       children: [
-        Expanded(child: Text(labels.title, style: titleStyle)),
-        if (onClose != null)
+        Expanded(child: Text(widget.labels.title, style: titleStyle)),
+        if (widget.onClose != null)
           Semantics(
-            label: labels.close,
+            label: widget.labels.close,
             button: true,
             child: IconButton(
               icon: const Icon(Icons.close),
-              onPressed: onClose,
+              onPressed: widget.onClose,
             ),
           ),
       ],
@@ -78,16 +108,16 @@ class VLibrasSettingsPanel extends StatelessWidget {
 
   Widget _buildSpeedSection(VLibrasValue value) {
     final currentLabel = switch (value.speed) {
-      VLibrasSpeed.slow => labels.speedSlow,
-      VLibrasSpeed.normal => labels.speedNormal,
-      VLibrasSpeed.fast => labels.speedFast,
+      VLibrasSpeed.slow => widget.labels.speedSlow,
+      VLibrasSpeed.normal => widget.labels.speedNormal,
+      VLibrasSpeed.fast => widget.labels.speedFast,
     };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            Expanded(child: Text(labels.speed)),
+            Expanded(child: Text(widget.labels.speed)),
             Text(
               currentLabel,
               style: const TextStyle(fontWeight: FontWeight.w500),
@@ -103,8 +133,8 @@ class VLibrasSettingsPanel extends StatelessWidget {
                 max: (VLibrasSpeed.values.length - 1).toDouble(),
                 divisions: VLibrasSpeed.values.length - 1,
                 value: value.speed.index.toDouble(),
-                onChanged: (v) =>
-                    controller.setSpeed(VLibrasSpeed.values[v.round()]),
+                onChanged: (v) => widget.controller
+                    .setSpeed(VLibrasSpeed.values[v.round()]),
               ),
             ),
             const Icon(Icons.directions_run, size: 20),
@@ -115,24 +145,64 @@ class VLibrasSettingsPanel extends StatelessWidget {
   }
 
   Widget _buildAvatarSection(VLibrasValue value) {
-    String labelFor(VLibrasAvatar a) => switch (a) {
-          VLibrasAvatar.icaro => labels.avatarIcaro,
-          VLibrasAvatar.hosana => labels.avatarHosana,
-          VLibrasAvatar.guga => labels.avatarGuga,
-        };
-
     return Row(
       children: [
         const Icon(Icons.person_outline, size: 20),
         const SizedBox(width: 8),
-        Expanded(child: Text(labels.avatar)),
-        VLibrasInlineDropdown<VLibrasAvatar>(
-          value: value.avatar,
-          items: VLibrasAvatar.values,
-          labelFor: labelFor,
-          onChanged: controller.setAvatar,
+        Expanded(child: Text(widget.labels.avatar)),
+        CompositedTransformTarget(
+          link: _avatarLink,
+          child: InkWell(
+            onTap: () => setState(() => _avatarOpen = !_avatarOpen),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_avatarLabelFor(value.avatar)),
+                  Icon(
+                    _avatarOpen
+                        ? Icons.arrow_drop_up
+                        : Icons.arrow_drop_down,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAvatarList(VLibrasValue value) {
+    final theme = Theme.of(context);
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(4),
+      child: IntrinsicWidth(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final a in VLibrasAvatar.values)
+              InkWell(
+                onTap: () {
+                  widget.controller.setAvatar(a);
+                  setState(() => _avatarOpen = false);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  color: a == value.avatar
+                      ? theme.colorScheme.primaryContainer
+                      : null,
+                  child: Text(_avatarLabelFor(a)),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -141,94 +211,11 @@ class VLibrasSettingsPanel extends StatelessWidget {
       children: [
         const Icon(Icons.closed_caption, size: 20),
         const SizedBox(width: 8),
-        Expanded(child: Text(labels.subtitles)),
+        Expanded(child: Text(widget.labels.subtitles)),
         Switch(
           value: value.subtitlesEnabled,
-          onChanged: controller.setSubtitles,
+          onChanged: widget.controller.setSubtitles,
         ),
-      ],
-    );
-  }
-}
-
-/// A compact inline dropdown that does not depend on [Navigator]/[Overlay].
-///
-/// Exposed because [VLibrasSettingsPanel] is often mounted via
-/// `MaterialApp.builder`, which places it above the app's [Navigator] — so
-/// Material's [DropdownButton] cannot find a [Navigator] ancestor and crashes
-/// when the menu is opened. This widget expands its option list in-place.
-class VLibrasInlineDropdown<T> extends StatefulWidget {
-  const VLibrasInlineDropdown({
-    super.key,
-    required this.value,
-    required this.items,
-    required this.labelFor,
-    required this.onChanged,
-  });
-
-  final T value;
-  final List<T> items;
-  final String Function(T) labelFor;
-  final ValueChanged<T> onChanged;
-
-  @override
-  State<VLibrasInlineDropdown<T>> createState() =>
-      _VLibrasInlineDropdownState<T>();
-}
-
-class _VLibrasInlineDropdownState<T> extends State<VLibrasInlineDropdown<T>> {
-  bool _open = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        InkWell(
-          onTap: () => setState(() => _open = !_open),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(widget.labelFor(widget.value)),
-                Icon(_open ? Icons.arrow_drop_up : Icons.arrow_drop_down),
-              ],
-            ),
-          ),
-        ),
-        if (_open)
-          Container(
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.dividerColor),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final item in widget.items)
-                  InkWell(
-                    onTap: () {
-                      widget.onChanged(item);
-                      setState(() => _open = false);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      color: item == widget.value
-                          ? theme.colorScheme.primaryContainer
-                          : null,
-                      child: Text(widget.labelFor(item)),
-                    ),
-                  ),
-              ],
-            ),
-          ),
       ],
     );
   }

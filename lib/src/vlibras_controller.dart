@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
-import 'vlibras_value.dart';
 import 'vlibras_platform.dart';
+import 'vlibras_settings.dart';
+import 'vlibras_value.dart';
 import 'platform/unsupported_platform.dart'
     if (dart.library.js_interop) 'platform/web_platform.dart'
     if (dart.library.io) 'platform/mobile_platform.dart';
@@ -36,27 +37,36 @@ class VLibrasController extends ChangeNotifier
   ///
   /// [targetPath] sets the base URL from which the Unity WebGL player assets
   /// (`UnityLoader.js`, `playerweb.json`, etc.) are served.
-  /// Defaults to `/vlibras/target`, which matches the conventional layout:
-  /// ```
-  /// web/
-  ///   vlibras/
-  ///     vlibras.js
-  ///     target/          ← copy from the plugin's web/vlibras/target/
-  ///       UnityLoader.js
-  ///       playerweb.json
-  ///       ...
-  /// ```
-  /// For production, set this to a CDN or server URL that you control and that
-  /// sends CORS headers for your app's origin.
+  /// Defaults to `/vlibras/target`, which matches the conventional layout.
+  ///
+  /// [initialSettings] seeds the controller value with the given settings, so
+  /// the first `ready` state already reflects them. They are also applied to
+  /// the platform during [initialize()].
+  ///
+  /// [onSettingsChanged] is invoked whenever the user-facing settings change
+  /// (speed, avatar, subtitles) via [setSpeed], [setAvatar], or [setSubtitles]
+  /// — after the platform accepts the change. It is NOT invoked during
+  /// the initial apply step inside [initialize()].
   VLibrasController({
     VLibrasPlatform? platform,
     String targetPath = '/vlibras/target',
-  }) {
+    VLibrasSettings? initialSettings,
+    void Function(VLibrasSettings)? onSettingsChanged,
+  })  : _onSettingsChanged = onSettingsChanged {
+    if (initialSettings != null) {
+      _value = _value.copyWith(
+        speed: initialSettings.speed,
+        avatar: initialSettings.avatar,
+        subtitlesEnabled: initialSettings.subtitlesEnabled,
+      );
+    }
     _platform =
         platform ?? createDefaultPlatform(_onPlatformStatus, targetPath);
   }
 
   late final VLibrasPlatform _platform;
+  final void Function(VLibrasSettings)? _onSettingsChanged;
+  bool _applyingInitial = false;
   VLibrasValue _value = const VLibrasValue();
 
   /// The current state of the VLibras translation lifecycle.
@@ -68,6 +78,19 @@ class VLibrasController extends ChangeNotifier
     if (_value == newValue) return;
     _value = newValue;
     notifyListeners();
+  }
+
+  /// Emits [_onSettingsChanged] with the current settings, unless suppressed
+  /// by [_applyingInitial].
+  void _emitSettingsChanged() {
+    if (_applyingInitial) return;
+    final cb = _onSettingsChanged;
+    if (cb == null) return;
+    cb(VLibrasSettings(
+      speed: _value.speed,
+      avatar: _value.avatar,
+      subtitlesEnabled: _value.subtitlesEnabled,
+    ));
   }
 
   /// Forwards platform status callbacks to the controller's value.
@@ -167,11 +190,13 @@ class VLibrasController extends ChangeNotifier
   Future<void> setSpeed(VLibrasSpeed speed) async {
     if (!_isReadyForPlatform) {
       _setValue(_value.copyWith(speed: speed));
+      _emitSettingsChanged();
       return;
     }
     try {
       await _platform.setSpeed(speed.multiplier);
       _setValue(_value.copyWith(speed: speed, clearError: true));
+      _emitSettingsChanged();
     } catch (e) {
       debugPrint('[VLibrasController] setSpeed error: $e');
       _setValue(_value.copyWith(
@@ -185,11 +210,13 @@ class VLibrasController extends ChangeNotifier
   Future<void> setAvatar(VLibrasAvatar avatar) async {
     if (!_isReadyForPlatform) {
       _setValue(_value.copyWith(avatar: avatar));
+      _emitSettingsChanged();
       return;
     }
     try {
       await _platform.setAvatar(avatar);
       _setValue(_value.copyWith(avatar: avatar, clearError: true));
+      _emitSettingsChanged();
     } catch (e) {
       debugPrint('[VLibrasController] setAvatar error: $e');
       _setValue(_value.copyWith(
@@ -204,11 +231,13 @@ class VLibrasController extends ChangeNotifier
     if (_value.subtitlesEnabled == enabled) return;
     if (!_isReadyForPlatform) {
       _setValue(_value.copyWith(subtitlesEnabled: enabled));
+      _emitSettingsChanged();
       return;
     }
     try {
       await _platform.setSubtitles(enabled);
       _setValue(_value.copyWith(subtitlesEnabled: enabled, clearError: true));
+      _emitSettingsChanged();
     } catch (e) {
       debugPrint('[VLibrasController] setSubtitles error: $e');
       _setValue(_value.copyWith(

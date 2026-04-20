@@ -560,4 +560,47 @@ void main() {
       expect(controller.value.subtitlesEnabled, isTrue);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // onSettingsChanged
+  // -------------------------------------------------------------------------
+  group('onSettingsChanged', () {
+    test('is invoked after setSpeed succeeds', () async {
+      final captured = <VLibrasSettings>[];
+      final c = VLibrasController(
+        platform: platform,
+        onSettingsChanged: captured.add,
+      );
+      await c.initialize();
+      await c.setSpeed(VLibrasSpeed.fast);
+      expect(captured, hasLength(1));
+      expect(captured.last.speed, VLibrasSpeed.fast);
+      c.dispose();
+    });
+
+    test('is NOT invoked when platform throws', () async {
+      when(() => platform.setAvatar(any())).thenThrow(Exception('fail'));
+      final captured = <VLibrasSettings>[];
+      final c = VLibrasController(
+        platform: platform,
+        onSettingsChanged: captured.add,
+      );
+      await c.initialize();
+      await c.setAvatar(VLibrasAvatar.hosana);
+      expect(captured, isEmpty);
+      c.dispose();
+    });
+
+    test('is NOT invoked by setSubtitles when state is unchanged', () async {
+      final captured = <VLibrasSettings>[];
+      final c = VLibrasController(
+        platform: platform,
+        onSettingsChanged: captured.add,
+      );
+      await c.initialize();
+      await c.setSubtitles(true); // default is true
+      expect(captured, isEmpty);
+      c.dispose();
+    });
+  });
 }

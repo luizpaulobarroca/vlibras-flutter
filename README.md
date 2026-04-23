@@ -1,38 +1,109 @@
 # vlibras_flutter
 
-Plugin Flutter para exibir traduções de texto para LIBRAS usando o avatar 3D VLibras. Desenvolvido para [VLibras](https://vlibras.gov.br/), iniciativa do governo brasileiro (UFPB/RNP) para acessibilidade digital.
+Plugin Flutter para exibir traduções de texto para LIBRAS usando o avatar 3D do [VLibras](https://vlibras.gov.br/) (iniciativa UFPB/RNP do governo brasileiro para acessibilidade digital).
 
-## Plataformas suportadas
+## Plataformas
 
-| Plataforma | Suporte |
-|------------|---------|
-| Flutter Web | ✓ |
-| Android | ✓ |
-| iOS | Planejado (v2) |
+| Plataforma   | Suporte       |
+|--------------|---------------|
+| Flutter Web  | ✓ (estável)   |
+| Android      | ✓ (via WebView) |
+| iOS          | Planejado     |
+
+---
 
 ## Instalação
 
-Adicione ao `pubspec.yaml` do seu projeto:
+O pacote ainda não está publicado no pub.dev. Use uma das três formas abaixo.
+
+### 1. Via Git (recomendado para testar)
+
+No `pubspec.yaml` do app consumidor:
+
+```yaml
+dependencies:
+  vlibras_flutter:
+    git:
+      url: https://github.com/luizpaulobarroca/vlibras-flutter.git
+      ref: main
+```
+
+Opcional — fixar uma tag ou commit específico:
+
+```yaml
+dependencies:
+  vlibras_flutter:
+    git:
+      url: https://github.com/luizpaulobarroca/vlibras-flutter.git
+      ref: v0.1.0        # ou um SHA de commit
+```
+
+Depois rode:
+
+```bash
+flutter pub get
+```
+
+### 2. Via path local
+
+Clone o repositório ao lado do seu app e aponte para a pasta:
+
+```yaml
+dependencies:
+  vlibras_flutter:
+    path: ../vlibras-flutter
+```
+
+### 3. Via pub.dev
 
 ```yaml
 dependencies:
   vlibras_flutter: ^0.1.0
 ```
 
-### Configuração para Flutter Web
+*(disponível quando a primeira versão for publicada)*
 
-O plugin requer o arquivo `vlibras.js` na pasta `web/vlibras/` do seu app:
+---
 
-1. Copie o arquivo `vlibras.js` para `web/vlibras/vlibras.js`
-2. Adicione o script no `web/index.html` antes do `</body>`:
+## Configuração por plataforma
+
+### Flutter Web
+
+O avatar é carregado por um player Unity WebGL servido a partir do diretório `web/` do seu app. Você precisa de **dois conjuntos de arquivos**:
+
+**a) O loader JS** em `web/vlibras/vlibras.js`
+**b) Os assets Unity** em `web/vlibras/target/`:
+```
+web/vlibras/target/UnityLoader.js
+web/vlibras/target/playerweb.json
+web/vlibras/target/playerweb.data.unityweb
+web/vlibras/target/playerweb.wasm.code.unityweb
+web/vlibras/target/playerweb.wasm.framework.unityweb
+```
+
+A forma mais prática é copiar a pasta `web/vlibras/` do próprio repositório do plugin:
+
+```bash
+# a partir da raiz do seu app
+git clone --depth 1 https://github.com/luizpaulobarroca/vlibras-flutter.git /tmp/vlibras
+cp -r /tmp/vlibras/web/vlibras ./web/vlibras
+```
+
+Depois, referencie o loader no seu `web/index.html`, antes do `</body>`:
 
 ```html
 <script src="vlibras/vlibras.js"></script>
 ```
 
-### Configuração para Android
+Se você servir a partir de um path customizado, passe-o ao controller:
 
-Adicione a permissão de internet no `android/app/src/main/AndroidManifest.xml` do seu app:
+```dart
+VLibrasController(targetPath: '/meu-app/vlibras/target');
+```
+
+### Android
+
+Adicione a permissão de internet em `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -41,14 +112,60 @@ Adicione a permissão de internet no `android/app/src/main/AndroidManifest.xml` 
 </manifest>
 ```
 
-O avatar carrega os assets 3D via CDN — nenhum arquivo adicional é necessário.
+Nenhum outro asset é necessário — o avatar Android carrega via WebView + CDN.
 
-## Uso básico
+---
+
+## Uso
+
+### Opção A — widget de acessibilidade (mais simples)
+
+Plugue no `builder` do seu `MaterialApp` e pronto: um botão flutuante à direita abre o avatar, e qualquer `Text` do app pode ser tocado para ser traduzido.
 
 ```dart
+import 'package:flutter/material.dart';
 import 'package:vlibras_flutter/vlibras_flutter.dart';
 
+void main() => runApp(const MyApp());
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      builder: (context, child) =>
+          VLibrasAccessibilityWidget(child: child!),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Minha aplicação')),
+      body: const Padding(
+        padding: EdgeInsets.all(24),
+        child: Text('Toque no botão azul e depois neste texto.'),
+      ),
+    );
+  }
+}
+```
+
+> `VLibrasAccessibilityWidget` precisa estar **dentro** de `MaterialApp` (por isso usamos `builder`), para que `Directionality`, `MediaQuery` e `Theme` estejam disponíveis.
+
+### Opção B — controller + view (uso avançado)
+
+Quando você quer integrar o avatar em um layout específico e controlar traduções manualmente:
+
+```dart
 class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
   @override
   State<MyWidget> createState() => _MyWidgetState();
 }
@@ -80,9 +197,7 @@ class _MyWidgetState extends State<MyWidget> {
         ),
         ValueListenableBuilder<VLibrasValue>(
           valueListenable: _controller,
-          builder: (context, value, _) {
-            return Text('Status: ${value.status.name}');
-          },
+          builder: (_, value, __) => Text('Status: ${value.status.name}'),
         ),
         ElevatedButton(
           onPressed: () => _controller.translate('Olá mundo'),
@@ -94,23 +209,33 @@ class _MyWidgetState extends State<MyWidget> {
 }
 ```
 
+---
+
 ## Estados do controller
 
-| Status | Descrição |
-|--------|-----------|
-| `idle` | Criado mas não inicializado |
-| `initializing` | `initialize()` em andamento |
-| `ready` | Pronto para traduzir |
-| `translating` | Aguardando resposta do player |
-| `playing` | Avatar animando a tradução |
-| `error` | Erro — veja `VLibrasValue.error` |
+| Status         | Descrição                                    |
+|----------------|----------------------------------------------|
+| `idle`         | Criado mas não inicializado                  |
+| `initializing` | `initialize()` em andamento                  |
+| `ready`        | Pronto para traduzir                         |
+| `translating`  | Aguardando resposta do player                |
+| `playing`      | Avatar animando a tradução                   |
+| `error`        | Erro — veja `VLibrasValue.error`             |
 
-## Persisting user preferences
+Métodos do controller:
 
-`VLibrasController` does not bundle a persistence backend. To save the user's
-speed, avatar and subtitle choices across app launches, wire two optional
-constructor parameters and plug in a package of your choice (for example
-`shared_preferences`):
+- `initialize()` — prepara a plataforma
+- `translate(String)` — traduz um texto
+- `pause()` / `resume()` / `stop()` / `repeat()` — controles do player
+- `setSpeed(VLibrasSpeed)` — preset de velocidade (slow/normal/fast)
+- `setAvatar(VLibrasAvatar)` — troca o avatar (ícaro/hosana/guga)
+- `setSubtitles(bool)` — liga/desliga legendas
+
+---
+
+## Persistência de preferências do usuário
+
+O controller não traz backend de persistência. Para salvar velocidade, avatar e legendas entre execuções, use os parâmetros opcionais do construtor com o pacote que preferir (ex.: `shared_preferences`):
 
 ```dart
 Future<VLibrasSettings> _loadSettings() async {
@@ -132,11 +257,40 @@ final controller = VLibrasController(
 await controller.initialize();
 ```
 
-`onSettingsChanged` is invoked only after the underlying player accepts a
-change, so callbacks never persist an intermediate or rejected state.
-`initialSettings` is applied before the controller first reports `ready`,
-so the first observed state already reflects the user's preferences.
+`onSettingsChanged` é chamado apenas depois que o player aceita a mudança, então o callback nunca persiste um estado intermediário ou rejeitado. `initialSettings` é aplicado antes do primeiro `ready`.
+
+---
+
+## Customização do `VLibrasAccessibilityWidget`
+
+```dart
+VLibrasAccessibilityWidget(
+  avatarWidth: 280,
+  avatarHeight: 320,
+  buttonSize: 56,
+  showSettingsButton: true,
+  settingsLabels: const VLibrasSettingsLabels(
+    title: 'Configurações',
+    speed: 'Velocidade',
+    avatar: 'Avatar',
+    subtitles: 'Legendas',
+    close: 'Fechar',
+  ),
+  child: child!,
+)
+```
+
+---
+
+## Rodando o exemplo
+
+```bash
+git clone https://github.com/luizpaulobarroca/vlibras-flutter.git
+cd vlibras-flutter/example
+flutter pub get
+flutter run -d chrome
+```
 
 ## Licença
 
-MIT — veja [LICENSE](LICENSE)
+MIT — veja [LICENSE](LICENSE).

@@ -103,16 +103,11 @@ VLibrasController(targetPath: '/meu-app/vlibras/target');
 
 ### Android
 
-Adicione a permissão de internet em `android/app/src/main/AndroidManifest.xml`:
+**Zero setup.** A permissão `INTERNET` e a configuração de *cleartext traffic* para `127.0.0.1` são contribuídas automaticamente pelo `AndroidManifest.xml` do plugin e mescladas no manifest do seu app pelo Gradle. Os assets Unity são empacotados no pacote e servidos para o WebView via um `HttpServer` loopback em tempo de execução — nada para copiar.
 
-```xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET"/>
-    ...
-</manifest>
-```
+Requisitos mínimos: `minSdk 21` (padrão do Flutter).
 
-Nenhum outro asset é necessário — o avatar Android carrega via WebView + CDN.
+> **Se o seu app já declara o próprio `android:networkSecurityConfig`** no `AndroidManifest.xml`, o manifest merger vai parar com um erro de conflito. Nesse caso, copie as regras de `android/src/main/res/xml/vlibras_network_security_config.xml` (permitir cleartext em `127.0.0.1`) para o seu config e adicione `tools:replace="android:networkSecurityConfig"` no elemento `<application>`.
 
 ---
 

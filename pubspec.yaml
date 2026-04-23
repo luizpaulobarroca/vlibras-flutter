@@ -1,6 +1,6 @@
 name: vlibras_flutter
-description: Plugin Flutter para tradução de texto para LIBRAS com avatar 3D VLibras. Suporta Flutter Web via HtmlElementView.
-version: 0.1.0
+description: Plugin Flutter para tradução de texto para LIBRAS com avatar 3D VLibras. Suporta Flutter Web e Android.
+version: 0.2.0
 homepage: https://github.com/luizpaulobarroca/vlibras-flutter
 repository: https://github.com/luizpaulobarroca/vlibras-flutter
 issue_tracker: https://github.com/luizpaulobarroca/vlibras-flutter/issues
@@ -32,6 +32,9 @@ flutter:
   uses-material-design: true
   plugin:
     platforms:
+      android:
+        package: com.luizpaulobarroca.vlibras_flutter
+        pluginClass: VLibrasFlutterPlugin
       web:
         pluginClass: VLibrasFlutterWebPlugin
         fileName: vlibras_flutter_web_plugin.dart

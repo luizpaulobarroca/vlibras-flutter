@@ -11,7 +11,7 @@ import 'vlibras_value.dart';
 class VLibrasSettings {
   /// Creates a [VLibrasSettings].
   const VLibrasSettings({
-    this.speed = VLibrasSpeed.normal,
+    this.speed = VLibrasSpeed.slow,
     this.avatar = VLibrasAvatar.icaro,
     this.subtitlesEnabled = true,
   });
@@ -50,7 +50,7 @@ class VLibrasSettings {
   factory VLibrasSettings.fromJson(Map<String, dynamic> json) {
     return VLibrasSettings(
       speed: _enumFromName(VLibrasSpeed.values, json['speed']) ??
-          VLibrasSpeed.normal,
+          VLibrasSpeed.slow,
       avatar: _enumFromName(VLibrasAvatar.values, json['avatar']) ??
           VLibrasAvatar.icaro,
       subtitlesEnabled: json['subtitlesEnabled'] is bool

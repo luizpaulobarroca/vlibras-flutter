@@ -50,6 +50,7 @@ class VLibrasController extends ChangeNotifier
   VLibrasController({
     VLibrasPlatform? platform,
     String targetPath = '/vlibras/target',
+    String? translateUrl,
     VLibrasSettings? initialSettings,
     void Function(VLibrasSettings)? onSettingsChanged,
   })  : _onSettingsChanged = onSettingsChanged {
@@ -60,8 +61,8 @@ class VLibrasController extends ChangeNotifier
         subtitlesEnabled: initialSettings.subtitlesEnabled,
       );
     }
-    _platform =
-        platform ?? createDefaultPlatform(_onPlatformStatus, targetPath);
+    _platform = platform ??
+        createDefaultPlatform(_onPlatformStatus, targetPath, translateUrl);
   }
 
   late final VLibrasPlatform _platform;

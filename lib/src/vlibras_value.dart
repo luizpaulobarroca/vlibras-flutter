@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 
 /// Playback speed presets accepted by the VLibras Unity player.
 ///
-/// Values map to Unity's speed multiplier: 0.5x (slow), 1.0x (normal), 1.5x (fast).
+/// Values map to Unity's speed multiplier: 1.0x (slow), 1.5x (normal), 2.0x (fast).
 enum VLibrasSpeed {
-  slow(0.5),
-  normal(1.0),
-  fast(1.5);
+  slow(1.0),
+  normal(1.5),
+  fast(2.0);
 
   const VLibrasSpeed(this.multiplier);
 
@@ -62,7 +62,7 @@ class VLibrasValue {
   /// or `null` otherwise.
   final String? error;
 
-  /// The current playback speed preset. Defaults to [VLibrasSpeed.normal].
+  /// The current playback speed preset. Defaults to [VLibrasSpeed.slow].
   final VLibrasSpeed speed;
 
   /// The currently selected avatar persona. Defaults to [VLibrasAvatar.icaro].
@@ -75,7 +75,7 @@ class VLibrasValue {
   const VLibrasValue({
     this.status = VLibrasStatus.idle,
     this.error,
-    this.speed = VLibrasSpeed.normal,
+    this.speed = VLibrasSpeed.slow,
     this.avatar = VLibrasAvatar.icaro,
     this.subtitlesEnabled = true,
   });

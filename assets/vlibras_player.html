@@ -19,6 +19,7 @@
       player.on('animation:play', function() { VLibrasBridge.postMessage('animation:play'); });
       player.on('animation:end', function() { VLibrasBridge.postMessage('animation:end'); });
       player.load(document.getElementById('vp'));
+      
     });
     function vlibrasTranslate(t) { if (player) player.translate(t); }
   </script>

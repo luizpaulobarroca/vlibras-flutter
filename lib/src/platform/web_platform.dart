@@ -9,8 +9,9 @@ import '../vlibras_web_platform.dart';
 
 VLibrasPlatform createDefaultPlatform(
   void Function(VLibrasStatus) onStatus,
-  String targetPath,
-) {
+  String targetPath, [
+  String? translateUrl,
+]) {
   return VLibrasWebPlatform(
     onStatus: onStatus,
     playerFactory: () => _WebPlayerAdapter.create(targetPath),

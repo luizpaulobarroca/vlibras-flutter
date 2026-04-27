@@ -19,8 +19,16 @@ class VLibrasExampleApp extends StatelessWidget {
       ),
       // VLibrasAccessibilityWidget deve ser inserido via builder para ter
       // acesso a Directionality, MediaQuery e Theme do MaterialApp.
+      // Passe translateUrl para usar um endpoint de tradução personalizado:
+      // builder: (context, child) => VLibrasAccessibilityWidget(
+      //   translateUrl: 'https://seu-servidor.com/api/translate',
+      //   child: child!,
+      // ),
       builder: (context, child) =>
-          VLibrasAccessibilityWidget(child: child!),
+          VLibrasAccessibilityWidget(
+            child: child!,
+            translateUrl: 'https://traducao2.vlibras.gov.br/translate',
+            ),
       home: const _DemoPage(),
     );
   }

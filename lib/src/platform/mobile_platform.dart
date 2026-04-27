@@ -10,17 +10,24 @@ import '../vlibras_value.dart';
 
 VLibrasPlatform createDefaultPlatform(
   void Function(VLibrasStatus) onStatus,
-  String targetPath,
-) {
-  return VLibrasMobilePlatform(onStatus: onStatus, targetPath: targetPath);
+  String targetPath, [
+  String? translateUrl,
+]) {
+  return VLibrasMobilePlatform(
+    onStatus: onStatus,
+    targetPath: targetPath,
+    translateUrl: translateUrl,
+  );
 }
 
 class VLibrasMobilePlatform implements VLibrasPlatform {
   VLibrasMobilePlatform({
     required void Function(VLibrasStatus) onStatus,
     String targetPath = '',
+    String? translateUrl,
   })  : _onStatus = onStatus,
-        _requestedTargetPath = targetPath {
+        _requestedTargetPath = targetPath,
+        _translateUrl = translateUrl {
     _controller = _buildController();
     _initialize();
   }
@@ -31,6 +38,9 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   /// start with http:// or https://), local bundled assets are served via a
   /// loopback HTTP server — no CDN required, no CORS or ORB issues.
   final String _requestedTargetPath;
+
+  /// Custom translation API endpoint. When null the built-in VLibras URL is used.
+  final String? _translateUrl;
 
   late final WebViewController _controller;
   Completer<void>? _initCompleter;
@@ -61,6 +71,30 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
       ));
   }
 
+  // Fixed loopback port for the local asset server.
+  //
+  // Using a stable port keeps the page origin (http://127.0.0.1:_kAssetPort)
+  // constant across hot-restarts and full restarts. The VLibras dictionary
+  // and translator servers cache CORS preflight responses keyed by origin, so
+  // a changing random port causes stale-cache CORS failures on subsequent runs.
+  // `shared: true` lets a new instance bind immediately even if the previous
+  // Dart isolate hasn't fully released the port yet.
+  static const int _kAssetPort = 44100;
+
+  static Future<HttpServer> _bindAssetServer() async {
+    try {
+      return await HttpServer.bind(
+        InternetAddress.loopbackIPv4,
+        _kAssetPort,
+        shared: true,
+      );
+    } on SocketException {
+      // Extremely unlikely fallback: if the fixed port is blocked by something
+      // outside our control, use an ephemeral port.
+      return HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    }
+  }
+
   Future<void> _initialize() async {
     final vlibrasJs = await rootBundle
         .loadString('packages/vlibras_flutter/assets/vlibras.js');
@@ -69,32 +103,44 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
 
     final String targetPath;
     final String baseUrl;
+    String? proxyBase;
 
     if (_useLocalAssets) {
-      // Bind to a random loopback port so all Unity asset requests stay
-      // on 127.0.0.1 — same origin as the page, no CORS or mixed-content.
-      _assetServer =
-          await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      _assetServer = await _bindAssetServer();
       final port = _assetServer!.port;
       _serveAssets(_assetServer!);
       targetPath =
           'http://127.0.0.1:$port/packages/vlibras_flutter/assets/vlibras/target';
       baseUrl = 'http://127.0.0.1:$port/';
+      // All requests to *.vlibras.gov.br are routed through the local proxy so
+      // they are same-origin — eliminating CORS preflight caching issues entirely.
+      proxyBase = 'http://127.0.0.1:$port/vlibras-proxy';
     } else {
       targetPath = _requestedTargetPath;
       baseUrl = 'https://vlibras.gov.br/';
     }
 
+    // Clear stale CORS preflight entries that the WebView may have cached from
+    // previous sessions with a different port.
+    await _controller.clearCache();
+
     await _controller.loadHtmlString(
-      _buildHtml(vlibrasJs, unityLoaderJs, targetPath),
+      _buildHtml(vlibrasJs, unityLoaderJs, targetPath, _translateUrl, proxyBase),
       baseUrl: baseUrl,
     );
   }
 
   /// Serves flutter assets from the loopback HTTP server.
-  /// Requests arrive as e.g. GET /packages/vlibras_flutter/assets/vlibras/target/playerweb.json
+  /// Also handles `/vlibras-proxy/<host>/<path>` to forward requests to
+  /// VLibras external APIs with proper `Access-Control-Allow-Origin: *` headers,
+  /// bypassing server-side CORS preflight caching issues.
   static void _serveAssets(HttpServer server) {
     server.listen((HttpRequest req) async {
+      if (req.uri.path.startsWith('/vlibras-proxy/')) {
+        await _proxyRequest(req);
+        return;
+      }
+
       // Strip leading slash to get the rootBundle asset key.
       final key = req.uri.path.replaceFirst(RegExp('^/'), '');
       try {
@@ -116,8 +162,85 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     });
   }
 
+  /// Proxies requests to VLibras external APIs through the local server,
+  /// adding `Access-Control-Allow-Origin: *` so the WebView never sees a CORS
+  /// error regardless of what the upstream CDN has cached.
+  ///
+  /// Request path format: `/vlibras-proxy/<hostname>/<original-path>`
+  static Future<void> _proxyRequest(HttpRequest req) async {
+    // Respond to CORS preflight immediately.
+    if (req.method == 'OPTIONS') {
+      req.response
+        ..statusCode = HttpStatus.ok
+        ..headers.set('Access-Control-Allow-Origin', '*')
+        ..headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        ..headers.set('Access-Control-Allow-Headers', '*');
+      await req.response.close();
+      return;
+    }
+
+    try {
+      final rest = req.uri.path.substring('/vlibras-proxy/'.length);
+      final slash = rest.indexOf('/');
+      final host = slash >= 0 ? rest.substring(0, slash) : rest;
+      final path = slash >= 0 ? rest.substring(slash) : '/';
+      final target = Uri(
+        scheme: 'https',
+        host: host,
+        path: path,
+        query: req.uri.query.isNotEmpty ? req.uri.query : null,
+      );
+
+      final client = HttpClient();
+      final proxyReq = await client.openUrl(req.method, target);
+
+      // Forward headers — drop host/origin/referer so the upstream server
+      // receives a clean request (not 127.0.0.1 as origin).
+      req.headers.forEach((name, values) {
+        final n = name.toLowerCase();
+        if (const {'host', 'origin', 'referer'}.contains(n) ||
+            n.startsWith('access-control')) { return; }
+        for (final v in values) {
+          try {
+            proxyReq.headers.add(name, v);
+          } catch (_) {}
+        }
+      });
+
+      // Forward request body (required for POST /translate).
+      final body =
+          await req.fold<List<int>>([], (buf, chunk) => buf..addAll(chunk));
+      if (body.isNotEmpty) {
+        proxyReq.contentLength = body.length;
+        proxyReq.add(body);
+      }
+
+      final proxyResp = await proxyReq.close();
+
+      req.response.statusCode = proxyResp.statusCode;
+      req.response.headers
+        ..set('Access-Control-Allow-Origin', '*')
+        ..set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        ..set('Access-Control-Allow-Headers', '*');
+      if (proxyResp.headers.contentType != null) {
+        req.response.headers.contentType = proxyResp.headers.contentType;
+      }
+      await proxyResp.pipe(req.response);
+      client.close();
+    } catch (e) {
+      debugPrint('[VLibras proxy] error forwarding ${req.uri}: $e');
+      req.response.statusCode = HttpStatus.badGateway;
+      await req.response.close();
+    }
+  }
+
   static String _buildHtml(
-          String vlibrasJs, String unityLoaderJs, String targetPath) =>
+    String vlibrasJs,
+    String unityLoaderJs,
+    String targetPath, [
+    String? translateUrl,
+    String? proxyBase,
+  ]) =>
       '''
 <!DOCTYPE html>
 <html>
@@ -125,7 +248,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #DCE8F5; }
     #vp { width: 100%; height: 100%; }
     /* Force the Unity container and its canvas to fill the WebView */
     #gameContainer {
@@ -141,6 +264,33 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
 </head>
 <body>
   <div id="vp"></div>
+  ${proxyBase != null ? '''
+  <script>
+  // Intercept all XHR requests to *.vlibras.gov.br and redirect them through
+  // the local proxy server. This eliminates CORS errors caused by server-side
+  // CDN caching of preflight responses with stale origins.
+  (function() {
+    var PROXY = '$proxyBase';
+    var HOSTS = [
+      'dicionario2.vlibras.gov.br',
+      'dicionario.vlibras.gov.br',
+      'traducao2.vlibras.gov.br',
+      'vlibras.gov.br'
+    ];
+    var _origOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, async, user, pass) {
+      for (var i = 0; i < HOSTS.length; i++) {
+        if (url.indexOf('https://' + HOSTS[i]) === 0) {
+          url = PROXY + '/' + HOSTS[i] + url.substring(('https://' + HOSTS[i]).length);
+          break;
+        }
+      }
+      return _origOpen.call(this, method, url,
+        async !== undefined ? async : true, user, pass);
+    };
+  })();
+  </script>
+  ''' : '<!-- CDN mode: no proxy needed -->'}
   <script>$unityLoaderJs</script>
   <script>$vlibrasJs</script>
   <script>
@@ -160,7 +310,9 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     var player = null;
     window.addEventListener('load', function() {
       try {
-        player = new VLibras.Player({ targetPath: '$targetPath' });
+        var playerOpts = { targetPath: '$targetPath' };
+        ${translateUrl != null ? "playerOpts.translator = '$translateUrl';" : '// using default translator URL'}
+        player = new VLibras.Player(playerOpts);
         player.on('load', function() { VLibrasBridge.postMessage('load'); });
         player.on('animation:play', function() { VLibrasBridge.postMessage('animation:play'); });
         player.on('animation:end', function() { VLibrasBridge.postMessage('animation:end'); });

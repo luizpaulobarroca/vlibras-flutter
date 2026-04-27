@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'vlibras_controller.dart';
@@ -12,33 +13,6 @@ const Color _kAvatarBg = Color(0xFFDCE8F5);
 const Color _kSidebarBg = Colors.transparent;
 const Color _kIconInactive = Color(0xFFB0BEC5);
 
-
-// ── Sidebar circular icon button ─────────────────────────────────────────────
-class _SidebarButton extends StatelessWidget {
-  const _SidebarButton({
-    required this.icon,
-    required this.onTap,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = active ? _kGovBlue : _kIconInactive;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-        child: Icon(icon, color: Colors.white, size: 16),
-      ),
-    );
-  }
-}
 
 // ── Sidebar avatar circle (shows initial letter) ──────────────────────────────
 class _AvatarCircleButton extends StatelessWidget {
@@ -77,6 +51,46 @@ class _AvatarCircleButton extends StatelessWidget {
   }
 }
 
+
+// ── "Acessar link" confirmation tooltip (gov.br style) ───────────────────────
+class _LinkTooltip extends StatelessWidget {
+  const _LinkTooltip({required this.position});
+
+  final Offset position;
+
+  @override
+  Widget build(BuildContext context) {
+    const double w = 130;
+    final sw = MediaQuery.sizeOf(context).width;
+    final left = (position.dx - w / 2).clamp(8.0, sw - w - 8.0);
+    return Positioned(
+      left: left,
+      top: position.dy + 14,
+      child: IgnorePointer(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: w,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _kGovBlue,
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: const [
+                BoxShadow(
+                    color: Colors.black38, blurRadius: 6, offset: Offset(0, 2)),
+              ],
+            ),
+            child: const Text(
+              'Acessar link',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// A self-contained accessibility widget that adds a floating VLibras
 /// translation button to any Flutter app.
@@ -150,6 +164,13 @@ class _VLibrasAccessibilityWidgetState
   bool _isSettingsOpen = false;
   bool _isAvatarPickerOpen = false;
 
+  // ── Double-tap confirmation state ─────────────────────────────────────────
+  Offset? _pendingTapGlobal;
+  bool _passingThrough = false;
+
+  // Key on widget.child so hit tests bypass the opaque interceptor sibling.
+  final _childKey = GlobalKey();
+
 
   // ── Avatar display names ──────────────────────────────────────────────────
   static const _kAvatarLabels = {
@@ -172,35 +193,106 @@ class _VLibrasAccessibilityWidgetState
     super.dispose();
   }
 
-  // ── Text-tap handler: translates only app content, not panel UI ───────────
+  // ── Tooltip helpers ───────────────────────────────────────────────────────
+  // Rendered inside our own Stack — no Overlay needed (widget lives above the
+  // Navigator when placed in MaterialApp.builder, so Overlay.of() would fail).
+  void _showLinkTooltip(Offset globalPosition) {
+    setState(() => _pendingTapGlobal = globalPosition);
+  }
+
+  void _dismissLinkTooltip() {
+    setState(() => _pendingTapGlobal = null);
+  }
+
+  // Temporarily disables interception so a synthetic tap reaches child widgets.
+  void _passThroughTap(Offset globalPosition) {
+    setState(() => _passingThrough = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      GestureBinding.instance.handlePointerEvent(
+        PointerDownEvent(position: globalPosition, pointer: 99),
+      );
+      GestureBinding.instance.handlePointerEvent(
+        PointerUpEvent(position: globalPosition, pointer: 99),
+      );
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) setState(() => _passingThrough = false);
+      });
+    });
+  }
+
+  // ── Tap handler: first tap translates + shows tooltip; second tap passes ──
   void _onContentTap(TapUpDetails details) {
+    if (_passingThrough) return;
     if (!_isExpanded) return;
-    final renderObj = context.findRenderObject();
-    if (renderObj is! RenderBox) return;
+
+    // Use the Stack's render object only to compute the panel bounds.
+    final stackRo = context.findRenderObject();
+    if (stackRo is! RenderBox) return;
 
     // Ignore taps that land inside the VLibras panel itself.
-    final size = renderObj.size;
+    final size = stackRo.size;
     final panelTop = (size.height - widget.avatarHeight) / 2;
     final panelLeft = size.width - widget.avatarWidth;
     final panelRect =
         Rect.fromLTWH(panelLeft, panelTop, widget.avatarWidth, widget.avatarHeight);
     if (panelRect.contains(details.localPosition)) return;
 
-    final result = BoxHitTestResult();
-    renderObj.hitTest(result, position: details.localPosition);
-
-    for (final entry in result.path) {
-      final target = entry.target;
-      if (target is RenderParagraph) {
-        final text =
-            target.text.toPlainText(includeSemanticsLabels: false).trim();
-        if (text.isEmpty) continue;
-        _controller.translate(text);
+    // Second tap near the same position → activate the element.
+    if (_pendingTapGlobal != null) {
+      final dist = (details.globalPosition - _pendingTapGlobal!).distance;
+      if (dist < 44) {
+        _dismissLinkTooltip();
+        _passThroughTap(details.globalPosition);
         return;
+      }
+    }
+
+    // New tap → dismiss previous tooltip and handle fresh.
+    _dismissLinkTooltip();
+
+    // Hit-test widget.child directly (bypasses the opaque interceptor sibling).
+    final childRo = _childKey.currentContext?.findRenderObject();
+    if (childRo is RenderBox) {
+      final result = BoxHitTestResult();
+      childRo.hitTest(result, position: details.localPosition);
+
+      // Translate any paragraph text under the tap.
+      for (final entry in result.path) {
+        final target = entry.target;
+        if (target is RenderParagraph) {
+          final text =
+              target.text.toPlainText(includeSemanticsLabels: false).trim();
+          if (text.isEmpty) continue;
+          _controller.translate(text);
+          break;
+        }
+      }
+
+      // Show "Acessar link" only when the hit path contains an interactive
+      // element. Every widget with onTap (GestureDetector, InkWell, Button…)
+      // inserts a RenderSemanticsAnnotations with onTap != null into the
+      // render tree, regardless of whether semantics are enabled.
+      if (_hasInteractiveTarget(result)) {
+        _pendingTapGlobal = details.globalPosition;
+        _showLinkTooltip(details.globalPosition);
       }
     }
   }
 
+
+  // Returns true when the hit path contains a widget that handles taps
+  // (GestureDetector, InkWell, ElevatedButton, ListTile, etc.).
+  // Every such widget inserts a RenderSemanticsAnnotations with onTap != null
+  // into the render tree, making this check reliable without enabling semantics.
+  static bool _hasInteractiveTarget(BoxHitTestResult result) {
+    for (final entry in result.path) {
+      if (entry.target case final RenderSemanticsAnnotations sa) {
+        if (sa.properties.onTap != null) return true;
+      }
+    }
+    return false;
+  }
 
   // ── Collapsed floating button (center-right) ──────────────────────────────
   Widget _buildFloatingButton() {
@@ -339,11 +431,14 @@ class _VLibrasAccessibilityWidgetState
               padding: EdgeInsets.zero,
               constraints:
                   const BoxConstraints(minWidth: 32, minHeight: 32),
-              onPressed: () => setState(() {
-                _isExpanded = false;
-                _isSettingsOpen = false;
-                _isAvatarPickerOpen = false;
-              }),
+              onPressed: () {
+                _dismissLinkTooltip();
+                setState(() {
+                  _isExpanded = false;
+                  _isSettingsOpen = false;
+                  _isAvatarPickerOpen = false;
+                });
+              },
             ),
           ),
         ],
@@ -477,18 +572,6 @@ class _VLibrasAccessibilityWidgetState
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          _SidebarButton(
-            icon: Icons.help_outline,
-            active: false,
-            onTap: () {},
-          ),
-          const SizedBox(height: 10),
-          _SidebarButton(
-            icon: Icons.more_horiz,
-            active: false,
-            onTap: () {},
-          ),
         ],
       ),
     );
@@ -603,20 +686,38 @@ class _VLibrasAccessibilityWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTapUp: _onContentTap,
-      child: Stack(
-        children: [
-          widget.child,
-          ValueListenableBuilder<VLibrasValue>(
-            valueListenable: _controller,
-            builder: (context, value, __) => _isExpanded
-                ? _buildAvatarPanel(context, value)
-                : _buildFloatingButton(),
+    return Stack(
+      children: [
+        // ① App content — keyed so _onContentTap can hit-test it directly,
+        //    bypassing the opaque interceptor sibling above it.
+        KeyedSubtree(key: _childKey, child: widget.child),
+
+        // ② Tap interceptor — full-screen opaque sibling placed ABOVE
+        //    widget.child but BELOW the VLibras panel. Stack hit-tests from
+        //    last child to first; the panel (④) wins for its own area first,
+        //    then the interceptor catches everything else. Removed during
+        //    pass-through so the synthetic tap reaches widget.child's buttons.
+        if (_isExpanded && !_passingThrough)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTapUp: _onContentTap,
+            ),
           ),
-        ],
-      ),
+
+        // ③ "Acessar link" tooltip — IgnorePointer so it doesn't interfere
+        //    with the interceptor below it.
+        if (_pendingTapGlobal != null)
+          _LinkTooltip(position: _pendingTapGlobal!),
+
+        // ④ VLibras panel / button — topmost, handles its own taps first.
+        ValueListenableBuilder<VLibrasValue>(
+          valueListenable: _controller,
+          builder: (context, value, __) => _isExpanded
+              ? _buildAvatarPanel(context, value)
+              : _buildFloatingButton(),
+        ),
+      ],
     );
   }
 }

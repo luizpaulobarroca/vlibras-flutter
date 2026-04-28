@@ -8,7 +8,6 @@ import 'vlibras_view.dart';
 import 'vlibras_value.dart';
 
 // ── Gov.br official color palette ────────────────────────────────────────────
-const Color _kGovBlue = Color(0xFF003F86);
 const Color _kAvatarBg = Color(0xFFDCE8F5);
 const Color _kSidebarBg = Colors.transparent;
 const Color _kIconInactive = Color(0xFFB0BEC5);
@@ -20,11 +19,13 @@ class _AvatarCircleButton extends StatelessWidget {
     required this.initial,
     required this.isSelected,
     required this.onTap,
+    required this.primaryColor,
   });
 
   final String initial;
   final bool isSelected;
   final VoidCallback onTap;
+  final Color primaryColor;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +35,7 @@ class _AvatarCircleButton extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: isSelected ? _kGovBlue : _kIconInactive,
+          color: isSelected ? primaryColor : _kIconInactive,
           shape: BoxShape.circle,
         ),
         alignment: Alignment.center,
@@ -54,9 +55,10 @@ class _AvatarCircleButton extends StatelessWidget {
 
 // ── "Acessar link" confirmation tooltip (gov.br style) ───────────────────────
 class _LinkTooltip extends StatelessWidget {
-  const _LinkTooltip({required this.position});
+  const _LinkTooltip({required this.position, required this.color});
 
   final Offset position;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +75,7 @@ class _LinkTooltip extends StatelessWidget {
             width: w,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: _kGovBlue,
+              color: color,
               borderRadius: BorderRadius.circular(4),
               boxShadow: const [
                 BoxShadow(
@@ -120,6 +122,7 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
   const VLibrasAccessibilityWidget({
     super.key,
     required this.child,
+    this.primaryColor = const Color(0xFF003F86),
     this.avatarWidth = 280.0,
     this.avatarHeight = 320.0,
     this.buttonSize = 56.0,
@@ -127,6 +130,10 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
     this.settingsLabels = const VLibrasSettingsLabels(),
     this.translateUrl,
   });
+
+  /// Primary colour used for the floating button, header, footer, and
+  /// interactive accents. Defaults to the official gov.br blue (`#003F86`).
+  final Color primaryColor;
 
   /// The app content to wrap. Text taps on this subtree trigger translation.
   final Widget child;
@@ -318,9 +325,9 @@ class _VLibrasAccessibilityWidgetState
               ),
               child: Container(
                 width: widget.buttonSize + 16,
-                decoration: const BoxDecoration(
-                  color: _kGovBlue,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: widget.primaryColor,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(8),
                     bottomLeft: Radius.circular(8),
                   ),
@@ -389,7 +396,7 @@ class _VLibrasAccessibilityWidgetState
   Widget _buildHeader() {
     return Container(
       height: 40,
-      color: _kGovBlue,
+      color: widget.primaryColor,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
@@ -480,10 +487,10 @@ class _VLibrasAccessibilityWidgetState
   Widget _buildSettingsOverlay() {
     return Theme(
       data: ThemeData.dark().copyWith(
-        colorScheme: const ColorScheme.dark(
+        colorScheme: ColorScheme.dark(
           primary: Colors.white,
-          primaryContainer: Color(0xFF1A5EA8),
-          surface: _kGovBlue,
+          primaryContainer: widget.primaryColor.withValues(alpha: 0.8),
+          surface: widget.primaryColor,
         ),
         sliderTheme: const SliderThemeData(
           activeTrackColor: Colors.white,
@@ -505,7 +512,7 @@ class _VLibrasAccessibilityWidgetState
         ),
       ),
       child: Material(
-        color: _kGovBlue,
+        color: widget.primaryColor,
         child: VLibrasSettingsPanel(
           controller: _controller,
           labels: widget.settingsLabels,
@@ -543,6 +550,7 @@ class _VLibrasAccessibilityWidgetState
                 _AvatarCircleButton(
                   initial: _kAvatarLabels[value.avatar]![0],
                   isSelected: true,
+                  primaryColor: widget.primaryColor,
                   onTap: () => setState(() {
                     _isAvatarPickerOpen = !_isAvatarPickerOpen;
                     if (_isAvatarPickerOpen) _isSettingsOpen = false;
@@ -554,6 +562,7 @@ class _VLibrasAccessibilityWidgetState
                   _AvatarCircleButton(
                     initial: _kAvatarLabels[others[0]]![0],
                     isSelected: false,
+                    primaryColor: widget.primaryColor,
                     onTap: () {
                       _controller.setAvatar(others[0]);
                       setState(() => _isAvatarPickerOpen = false);
@@ -563,6 +572,7 @@ class _VLibrasAccessibilityWidgetState
                   _AvatarCircleButton(
                     initial: _kAvatarLabels[others[1]]![0],
                     isSelected: false,
+                    primaryColor: widget.primaryColor,
                     onTap: () {
                       _controller.setAvatar(others[1]);
                       setState(() => _isAvatarPickerOpen = false);
@@ -640,7 +650,7 @@ class _VLibrasAccessibilityWidgetState
   Widget _buildFooter(VLibrasValue value) {
     return Container(
       height: 44,
-      color: _kGovBlue,
+      color: widget.primaryColor,
       padding: const EdgeInsets.only(left: 10, right: 14),
       child: Row(
         children: [
@@ -658,7 +668,7 @@ class _VLibrasAccessibilityWidgetState
                 overlayColor: Colors.white24,
                 valueIndicatorColor: Colors.white,
                 valueIndicatorTextStyle:
-                    const TextStyle(color: _kGovBlue, fontSize: 12),
+                    TextStyle(color: widget.primaryColor, fontSize: 12),
               ),
               child: Slider(
                 value: _speedToSlider(value.speed),
@@ -708,7 +718,7 @@ class _VLibrasAccessibilityWidgetState
         // ③ "Acessar link" tooltip — IgnorePointer so it doesn't interfere
         //    with the interceptor below it.
         if (_pendingTapGlobal != null)
-          _LinkTooltip(position: _pendingTapGlobal!),
+          _LinkTooltip(position: _pendingTapGlobal!, color: widget.primaryColor),
 
         // ④ VLibras panel / button — topmost, handles its own taps first.
         ValueListenableBuilder<VLibrasValue>(

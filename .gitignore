@@ -5,6 +5,7 @@
 .pub-cache/
 .pub/
 build/
+.gradle/
 
 # Generated dartdoc
 doc/

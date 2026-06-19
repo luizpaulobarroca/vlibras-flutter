@@ -70,50 +70,6 @@ class _AvatarCircleButton extends StatelessWidget {
   }
 }
 
-// ── "Acessar link" confirmation tooltip (gov.br style) ───────────────────────
-class _LinkTooltip extends StatelessWidget {
-  const _LinkTooltip({required this.position, required this.color});
-
-  final Offset position;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    const double w = 130;
-    final sw = MediaQuery.sizeOf(context).width;
-    final left = (position.dx - w / 2).clamp(8.0, sw - w - 8.0);
-    return Positioned(
-      left: left,
-      top: position.dy + 14,
-      child: IgnorePointer(
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: w,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(4),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black38,
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Text(
-              'Acessar link',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 13),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// A self-contained accessibility widget that adds a floating VLibras
 /// translation button to any Flutter app.
 ///
@@ -260,13 +216,8 @@ class _VLibrasAccessibilityWidgetState
     super.dispose();
   }
 
-  // ── Tooltip helpers ───────────────────────────────────────────────────────
-  // Rendered inside our own Stack — no Overlay needed (widget lives above the
-  // Navigator when placed in MaterialApp.builder, so Overlay.of() would fail).
-  void _showLinkTooltip(Offset globalPosition) {
-    setState(() => _pendingTapGlobal = globalPosition);
-  }
-
+  // ── Pending-tap helpers ───────────────────────────────────────────────────
+  // Clears the armed first tap (e.g. when the panel closes).
   void _dismissLinkTooltip() {
     setState(() => _pendingTapGlobal = null);
   }
@@ -288,7 +239,7 @@ class _VLibrasAccessibilityWidgetState
     });
   }
 
-  // ── Tap handler: first tap translates + shows tooltip; second tap passes ──
+  // ── Tap handler: first tap translates + arms; second tap nearby passes ──
   void _onContentTap(TapUpDetails details) {
     if (_passingThrough) return;
     if (!_isExpanded) return;
@@ -314,9 +265,7 @@ class _VLibrasAccessibilityWidgetState
       }
     }
 
-    // New tap → dismiss previous tooltip and handle fresh.
-    _dismissLinkTooltip();
-
+    // New tap → translate the text under the finger.
     // Hit-test widget.child directly (bypasses the opaque interceptor sibling).
     final childRo = _childKey.currentContext?.findRenderObject();
     if (childRo is RenderBox) {
@@ -335,29 +284,14 @@ class _VLibrasAccessibilityWidgetState
           break;
         }
       }
-
-      // Show "Acessar link" only when the hit path contains an interactive
-      // element. Every widget with onTap (GestureDetector, InkWell, Button…)
-      // inserts a RenderSemanticsAnnotations with onTap != null into the
-      // render tree, regardless of whether semantics are enabled.
-      if (_hasInteractiveTarget(result)) {
-        _pendingTapGlobal = details.globalPosition;
-        _showLinkTooltip(details.globalPosition);
-      }
     }
-  }
 
-  // Returns true when the hit path contains a widget that handles taps
-  // (GestureDetector, InkWell, ElevatedButton, ListTile, etc.).
-  // Every such widget inserts a RenderSemanticsAnnotations with onTap != null
-  // into the render tree, making this check reliable without enabling semantics.
-  static bool _hasInteractiveTarget(BoxHitTestResult result) {
-    for (final entry in result.path) {
-      if (entry.target case final RenderSemanticsAnnotations sa) {
-        if (sa.properties.onTap != null) return true;
-      }
-    }
-    return false;
+    // Arm the second tap for any element, not just ones we can recognise by
+    // render type. The first tap signs the content; a second tap nearby is
+    // passed straight through, activating whatever is underneath — button,
+    // bare GestureDetector, text field, date-picker field, etc. Passing a
+    // tap through to non-interactive content is harmless.
+    _pendingTapGlobal = details.globalPosition;
   }
 
   static double _clampDouble(double value, double min, double max) {
@@ -985,14 +919,6 @@ class _VLibrasAccessibilityWidgetState
               behavior: HitTestBehavior.opaque,
               onTapUp: _onContentTap,
             ),
-          ),
-
-        // ③ "Acessar link" tooltip — IgnorePointer so it doesn't interfere
-        //    with the interceptor below it.
-        if (_pendingTapGlobal != null)
-          _LinkTooltip(
-            position: _pendingTapGlobal!,
-            color: widget.primaryColor,
           ),
 
         // ④ VLibras panel / button — topmost, handles its own taps first.

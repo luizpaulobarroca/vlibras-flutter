@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -371,9 +372,15 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   @override
   Future<void> translate(String text) async {
     _onStatus(VLibrasStatus.translating);
-    final escaped =
-        text.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
-    await _controller.runJavaScript('vlibrasTranslate("$escaped")');
+    // jsonEncode yields a fully-escaped, quoted string literal (handles ", \,
+    // newlines, tabs, control chars). A JSON string is a valid JS string, so
+    // it can be dropped straight into the call. U+2028/U+2029 are valid in
+    // JSON but were illegal in JS string literals before ES2019, so escape
+    // them explicitly to stay safe across WebView engines.
+    final encoded = jsonEncode(text)
+        .replaceAll(' ', '\\u2028')
+        .replaceAll(' ', '\\u2029');
+    await _controller.runJavaScript('vlibrasTranslate($encoded)');
   }
 
   @override

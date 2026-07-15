@@ -24,6 +24,11 @@ const Gradient _kButtonIconGradient = LinearGradient(
 const double _kDockSideMargin = 0.0;
 const double _kDockVerticalMargin = 8.0;
 
+// Fraction of the raw pinch delta actually applied to the panel size. Below 1
+// it damps the gesture so resizing feels calm and controllable instead of
+// jumpy. 1.0 would track the fingers 1:1.
+const double _kPinchSensitivity = 0.6;
+
 enum _VLibrasDockSide { left, right }
 
 // ── VLibras sign-language figure SVG (path only, no background) ──────────────
@@ -197,8 +202,12 @@ class _VLibrasAccessibilityWidgetState
   // ── Pinch-to-resize state ─────────────────────────────────────────────────
   // Persistent size multiplier applied to avatarWidth/avatarHeight.
   double _scaleFactor = 1.0;
-  // _scaleFactor captured at the start of a scale gesture (null while idle).
-  double? _gestureBaseScale;
+  // The three fields below are captured once at gesture start and stay fixed
+  // for its duration, so every frame is computed from an immutable reference
+  // instead of the previous frame — this is what keeps resizing from jittering.
+  double? _gestureBaseScale; // _scaleFactor when the gesture began.
+  Offset? _gestureStartFocal; // Global focal point when the gesture began.
+  Offset? _gestureAnchor; // Docked-edge corner that stays pinned while resizing.
 
   // ── Double-tap confirmation state ─────────────────────────────────────────
   Offset? _pendingTapGlobal;
@@ -474,9 +483,16 @@ class _VLibrasAccessibilityWidgetState
     EdgeInsets padding,
   ) {
     final panelSize = _panelSize(viewport, padding);
+    final rect = _rectFor(viewport, padding, panelSize);
     setState(() {
-      _dragTopLeft = _rectFor(viewport, padding, panelSize).topLeft;
+      _dragTopLeft = rect.topLeft;
       _gestureBaseScale = _scaleFactor;
+      _gestureStartFocal = details.focalPoint;
+      // Pin the docked edge: left panels grow from their top-left, right panels
+      // from their top-right, so resizing expands toward the screen interior.
+      _gestureAnchor = _dockSide == _VLibrasDockSide.left
+          ? rect.topLeft
+          : rect.topRight;
     });
   }
 
@@ -485,34 +501,38 @@ class _VLibrasAccessibilityWidgetState
     Size viewport,
     EdgeInsets padding,
   ) {
-    final baseScale = _gestureBaseScale ?? _scaleFactor;
+    final baseScale = _gestureBaseScale;
+    final anchor = _gestureAnchor;
+    final startFocal = _gestureStartFocal;
+    if (baseScale == null || anchor == null || startFocal == null) return;
+
     setState(() {
-      // Resize: anchor the panel's top-left so it grows/shrinks toward the
-      // docked corner instead of drifting.
-      final beforeSize = _panelSize(viewport, padding);
-      final beforeTopLeft =
-          _dragTopLeft ?? _rectFor(viewport, padding, beforeSize).topLeft;
-      final anchor = _dockSide == _VLibrasDockSide.left
-          ? beforeTopLeft
-          : beforeTopLeft + Offset(beforeSize.width, 0);
+      // Resize: damp the raw pinch ratio around the gesture's starting scale so
+      // the panel changes size gently rather than snapping with the fingers.
+      final rawScale = baseScale * details.scale;
+      final dampedScale = baseScale + (rawScale - baseScale) * _kPinchSensitivity;
+      _scaleFactor = _clampScale(dampedScale, viewport, padding);
 
-      _scaleFactor = _clampScale(baseScale * details.scale, viewport, padding);
-
-      final afterSize = _panelSize(viewport, padding);
+      final size = _panelSize(viewport, padding);
       var topLeft = _dockSide == _VLibrasDockSide.left
           ? anchor
-          : anchor - Offset(afterSize.width, 0);
+          : anchor - Offset(size.width, 0);
 
-      // Drag: focalPointDelta covers both one- and two-finger movement.
-      topLeft += details.focalPointDelta;
+      // Move: apply the total focal displacement since the gesture started
+      // (absolute, not per-frame) so movement can't accumulate drift.
+      topLeft += details.focalPoint - startFocal;
 
-      _dragTopLeft = _clampTopLeft(topLeft, viewport, padding, afterSize);
+      _dragTopLeft = _clampTopLeft(topLeft, viewport, padding, size);
     });
   }
 
   void _onPanelScaleEnd(Size viewport, EdgeInsets padding) {
     _endDrag(viewport, padding, _panelSize(viewport, padding));
-    setState(() => _gestureBaseScale = null);
+    setState(() {
+      _gestureBaseScale = null;
+      _gestureStartFocal = null;
+      _gestureAnchor = null;
+    });
   }
 
   BorderRadius _dockedBorderRadius() {

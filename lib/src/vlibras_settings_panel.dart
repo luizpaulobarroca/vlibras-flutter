@@ -99,18 +99,19 @@ class VLibrasSettingsPanel extends StatelessWidget {
   Widget _buildAvatarChips(VLibrasValue value) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Row(
+      // Wrap (not Row) so the chips flow onto a second line instead of
+      // overflowing horizontally when the panel is resized down.
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: VLibrasAvatar.values.map((a) {
           final selected = a == value.avatar;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(_avatarLabel(a)),
-              selected: selected,
-              onSelected: (_) => controller.setAvatar(a),
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-            ),
+          return ChoiceChip(
+            label: Text(_avatarLabel(a)),
+            selected: selected,
+            onSelected: (_) => controller.setAvatar(a),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            labelPadding: const EdgeInsets.symmetric(horizontal: 4),
           );
         }).toList(),
       ),

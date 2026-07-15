@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -21,6 +23,11 @@ const Gradient _kButtonIconGradient = LinearGradient(
 );
 const double _kDockSideMargin = 0.0;
 const double _kDockVerticalMargin = 8.0;
+
+// Fraction of the raw pinch delta actually applied to the panel size. Below 1
+// it damps the gesture so resizing feels calm and controllable instead of
+// jumpy. 1.0 would track the fingers 1:1.
+const double _kPinchSensitivity = 0.6;
 
 enum _VLibrasDockSide { left, right }
 
@@ -107,7 +114,12 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
     this.settingsLabels = const VLibrasSettingsLabels(),
     this.translateUrl,
     this.buttonIconGradient,
-  });
+    this.minAvatarScale = 0.7,
+    this.maxAvatarScale = 2.5,
+  }) : assert(
+         minAvatarScale > 0 && minAvatarScale <= maxAvatarScale,
+         'minAvatarScale must be > 0 and <= maxAvatarScale',
+       );
 
   /// Whether the VLibras floating button and panel are shown.
   ///
@@ -128,6 +140,20 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
 
   /// Height of the expanded avatar window. Defaults to 320.
   final double avatarHeight;
+
+  /// Smallest pinch-to-resize factor applied to [avatarWidth]/[avatarHeight].
+  ///
+  /// The user can shrink the expanded panel down to this fraction of its
+  /// default size using a two-finger pinch gesture. Defaults to `0.7`.
+  final double minAvatarScale;
+
+  /// Largest pinch-to-resize factor applied to [avatarWidth]/[avatarHeight].
+  ///
+  /// The user can enlarge the expanded panel up to this multiple of its
+  /// default size using a two-finger pinch gesture. The effective maximum is
+  /// additionally capped so the panel never exceeds the available viewport.
+  /// Defaults to `2.5`.
+  final double maxAvatarScale;
 
   /// Size of the collapsed floating button. Defaults to 56.
   final double buttonSize;
@@ -172,6 +198,16 @@ class _VLibrasAccessibilityWidgetState
   _VLibrasDockSide _dockSide = _VLibrasDockSide.right;
   double? _dockCenterY;
   Offset? _dragTopLeft;
+
+  // ── Pinch-to-resize state ─────────────────────────────────────────────────
+  // Persistent size multiplier applied to avatarWidth/avatarHeight.
+  double _scaleFactor = 1.0;
+  // The three fields below are captured once at gesture start and stay fixed
+  // for its duration, so every frame is computed from an immutable reference
+  // instead of the previous frame — this is what keeps resizing from jittering.
+  double? _gestureBaseScale; // _scaleFactor when the gesture began.
+  Offset? _gestureStartFocal; // Global focal point when the gesture began.
+  Offset? _gestureAnchor; // Docked-edge corner that stays pinned while resizing.
 
   // ── Double-tap confirmation state ─────────────────────────────────────────
   Offset? _pendingTapGlobal;
@@ -314,9 +350,35 @@ class _VLibrasAccessibilityWidgetState
         2 * _kDockVerticalMargin;
 
     return Size(
-      _clampDouble(widget.avatarWidth, 0, maxWidth),
-      _clampDouble(widget.avatarHeight, 0, maxHeight),
+      _clampDouble(widget.avatarWidth * _scaleFactor, 0, maxWidth),
+      _clampDouble(widget.avatarHeight * _scaleFactor, 0, maxHeight),
     );
+  }
+
+  // Clamps a candidate scale factor to the user-provided range and to the
+  // largest factor that still fits the panel inside the available viewport,
+  // so pinch-to-resize can never push the panel off-screen or leave a "dead
+  // zone" where enlarging has no visible effect.
+  double _clampScale(double scale, Size viewport, EdgeInsets padding) {
+    final maxWidth =
+        viewport.width - padding.left - padding.right - 2 * _kDockSideMargin;
+    final maxHeight =
+        viewport.height -
+        padding.top -
+        padding.bottom -
+        2 * _kDockVerticalMargin;
+
+    var upperBound = widget.maxAvatarScale;
+    if (widget.avatarWidth > 0) {
+      upperBound = math.min(upperBound, maxWidth / widget.avatarWidth);
+    }
+    if (widget.avatarHeight > 0) {
+      upperBound = math.min(upperBound, maxHeight / widget.avatarHeight);
+    }
+    // Never let the viewport cap fall below the configured minimum.
+    upperBound = math.max(upperBound, widget.minAvatarScale);
+
+    return _clampDouble(scale, widget.minAvatarScale, upperBound);
   }
 
   Offset _clampTopLeft(
@@ -408,6 +470,71 @@ class _VLibrasAccessibilityWidgetState
     });
   }
 
+  // ── Combined drag + pinch handlers ────────────────────────────────────────
+  //
+  // A single ScaleGestureRecognizer drives both moving and resizing the panel:
+  // with one pointer it behaves like a pan (focalPointDelta), with two it also
+  // reports a scale factor. onPan* and onScale* cannot coexist on the same
+  // GestureDetector (scale is a superset of pan), so the whole interaction is
+  // expressed through the scale callbacks.
+  void _onPanelScaleStart(
+    ScaleStartDetails details,
+    Size viewport,
+    EdgeInsets padding,
+  ) {
+    final panelSize = _panelSize(viewport, padding);
+    final rect = _rectFor(viewport, padding, panelSize);
+    setState(() {
+      _dragTopLeft = rect.topLeft;
+      _gestureBaseScale = _scaleFactor;
+      _gestureStartFocal = details.focalPoint;
+      // Pin the docked edge: left panels grow from their top-left, right panels
+      // from their top-right, so resizing expands toward the screen interior.
+      _gestureAnchor = _dockSide == _VLibrasDockSide.left
+          ? rect.topLeft
+          : rect.topRight;
+    });
+  }
+
+  void _onPanelScaleUpdate(
+    ScaleUpdateDetails details,
+    Size viewport,
+    EdgeInsets padding,
+  ) {
+    final baseScale = _gestureBaseScale;
+    final anchor = _gestureAnchor;
+    final startFocal = _gestureStartFocal;
+    if (baseScale == null || anchor == null || startFocal == null) return;
+
+    setState(() {
+      // Resize: damp the raw pinch ratio around the gesture's starting scale so
+      // the panel changes size gently rather than snapping with the fingers.
+      final rawScale = baseScale * details.scale;
+      final dampedScale = baseScale + (rawScale - baseScale) * _kPinchSensitivity;
+      _scaleFactor = _clampScale(dampedScale, viewport, padding);
+
+      final size = _panelSize(viewport, padding);
+      var topLeft = _dockSide == _VLibrasDockSide.left
+          ? anchor
+          : anchor - Offset(size.width, 0);
+
+      // Move: apply the total focal displacement since the gesture started
+      // (absolute, not per-frame) so movement can't accumulate drift.
+      topLeft += details.focalPoint - startFocal;
+
+      _dragTopLeft = _clampTopLeft(topLeft, viewport, padding, size);
+    });
+  }
+
+  void _onPanelScaleEnd(Size viewport, EdgeInsets padding) {
+    _endDrag(viewport, padding, _panelSize(viewport, padding));
+    setState(() {
+      _gestureBaseScale = null;
+      _gestureStartFocal = null;
+      _gestureAnchor = null;
+    });
+  }
+
   BorderRadius _dockedBorderRadius() {
     if (_dragTopLeft != null) return BorderRadius.circular(8);
 
@@ -480,7 +607,8 @@ class _VLibrasAccessibilityWidgetState
   // ── Expanded panel ─────────────────────────────────────────────────────────
   // ignore: unused_element
   Widget _buildAvatarPanel(BuildContext context, VLibrasValue value) {
-    final screenHeight = MediaQuery.of(context).size.height;
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
     final topOffset = (screenHeight - widget.avatarHeight) / 2;
     final isLoading =
         value.status == VLibrasStatus.initializing ||
@@ -504,7 +632,14 @@ class _VLibrasAccessibilityWidgetState
         child: Column(
           children: [
             _buildHeader(),
-            Expanded(child: _buildMiddleArea(value, isLoading)),
+            Expanded(
+              child: _buildMiddleArea(
+                value,
+                isLoading,
+                mediaQuery.size,
+                mediaQuery.padding,
+              ),
+            ),
             _buildFooter(value),
           ],
         ),
@@ -563,17 +698,13 @@ class _VLibrasAccessibilityWidgetState
     );
   }
 
-  Widget _buildDraggableHeader(
-    Size viewport,
-    EdgeInsets padding,
-    Size panelSize,
-  ) {
+  Widget _buildDraggableHeader(Size viewport, EdgeInsets padding) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onPanStart: (_) => _startDrag(viewport, padding, panelSize),
-      onPanUpdate: (details) =>
-          _updateDrag(details, viewport, padding, panelSize),
-      onPanEnd: (_) => _endDrag(viewport, padding, panelSize),
+      onScaleStart: (details) => _onPanelScaleStart(details, viewport, padding),
+      onScaleUpdate: (details) =>
+          _onPanelScaleUpdate(details, viewport, padding),
+      onScaleEnd: (_) => _onPanelScaleEnd(viewport, padding),
       child: _buildHeader(),
     );
   }
@@ -601,8 +732,10 @@ class _VLibrasAccessibilityWidgetState
         clipBehavior: Clip.hardEdge,
         child: Column(
           children: [
-            _buildDraggableHeader(viewport, padding, panelSize),
-            Expanded(child: _buildMiddleArea(value, isLoading)),
+            _buildDraggableHeader(viewport, padding),
+            Expanded(
+              child: _buildMiddleArea(value, isLoading, viewport, padding),
+            ),
             _buildFooter(value),
           ],
         ),
@@ -673,16 +806,37 @@ class _VLibrasAccessibilityWidgetState
   //   1. WebView (full width — avatar centered)
   //   2. Sidebar (left overlay)
   //   3. Settings overlay (covers everything including sidebar)
-  Widget _buildMiddleArea(VLibrasValue value, bool isLoading) {
+  Widget _buildMiddleArea(
+    VLibrasValue value,
+    bool isLoading,
+    Size viewport,
+    EdgeInsets padding,
+  ) {
     return Stack(
       children: [
         // ── 1. Avatar/WebView: full width ───────────────────────────────
         Positioned.fill(child: _buildAvatarArea(value, isLoading)),
 
-        // ── 2. Sidebar: above the WebView ───────────────────────────────
+        // ── 2. Drag + pinch layer over the avatar ───────────────────────
+        //    Sits above the WebView (which needs no touch input) but below
+        //    the sidebar and settings overlay, so those keep receiving taps.
+        //    Gives the user a large surface to move and pinch-resize the
+        //    panel, complementing the draggable header.
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onScaleStart: (details) =>
+                _onPanelScaleStart(details, viewport, padding),
+            onScaleUpdate: (details) =>
+                _onPanelScaleUpdate(details, viewport, padding),
+            onScaleEnd: (_) => _onPanelScaleEnd(viewport, padding),
+          ),
+        ),
+
+        // ── 3. Sidebar: above the gesture layer ─────────────────────────
         Positioned(left: 0, top: 0, bottom: 0, child: _buildSidebar(value)),
 
-        // ── 3. Settings overlay: above everything, including sidebar ────
+        // ── 4. Settings overlay: above everything, including sidebar ────
         if (_isSettingsOpen) Positioned.fill(child: _buildSettingsOverlay()),
       ],
     );

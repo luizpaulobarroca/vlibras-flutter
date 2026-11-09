@@ -8,6 +8,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../vlibras_platform.dart';
 import '../vlibras_value.dart';
+import 'render_process_guard.dart';
 
 VLibrasPlatform createDefaultPlatform(
   void Function(VLibrasStatus) onStatus,
@@ -28,10 +29,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     String? translateUrl,
   })  : _onStatus = onStatus,
         _requestedTargetPath = targetPath,
-        _translateUrl = translateUrl {
-    _controller = _buildController();
-    _initialize();
-  }
+        _translateUrl = translateUrl;
 
   final void Function(VLibrasStatus) _onStatus;
 
@@ -43,9 +41,16 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   /// Custom translation API endpoint. When null the built-in VLibras URL is used.
   final String? _translateUrl;
 
-  late final WebViewController _controller;
+  // Criado sob demanda: o WebView com o player Unity ocupa centenas de MB no
+  // processo do renderer, então nada é instanciado nem carregado até alguém
+  // pedir a view ou chamar initialize().
+  WebViewController? _webView;
+  WebViewController get _controller => _webView ??= _buildController();
+  bool _disposed = false;
+  // O renderer do WebView caiu: este WebView não pode mais ser usado.
+  bool _renderGone = false;
+  int? _guardId;
   Completer<void>? _initCompleter;
-  bool _loaded = false;
   String? _pendingText;
   HttpServer? _assetServer;
 
@@ -56,7 +61,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
   Widget buildView() => WebViewWidget(controller: _controller);
 
   WebViewController _buildController() {
-    return WebViewController()
+    final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel('VLibrasBridge', onMessageReceived: _onBridge)
       ..setOnConsoleMessage((msg) {
@@ -70,6 +75,37 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
           '${err.errorCode} ${err.description} ${err.url}',
         ),
       ));
+    _watchRenderProcess(controller);
+    return controller;
+  }
+
+  Future<void> _watchRenderProcess(WebViewController controller) async {
+    final id = await RenderProcessGuard.watch(controller, _onRenderProcessGone);
+    if (id == null) return;
+    if (_disposed) {
+      RenderProcessGuard.unwatch(id);
+    } else {
+      _guardId = id;
+    }
+  }
+
+  void _onRenderProcessGone() {
+    if (_disposed) return;
+    _renderGone = true;
+    final completer = _initCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.completeError(
+        StateError('O processo de renderização do WebView foi encerrado'),
+      );
+    }
+    _onStatus(VLibrasStatus.error);
+  }
+
+  /// Roda [script] no player, a não ser que o WebView já tenha sido
+  /// descartado ou perdido o renderer.
+  Future<void> _run(String script) async {
+    if (_disposed || _renderGone) return;
+    await _controller.runJavaScript(script);
   }
 
   // Fixed loopback port for the local asset server.
@@ -101,6 +137,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
         .loadString('packages/vlibras_flutter/assets/vlibras.js');
     final unityLoaderJs = await rootBundle
         .loadString('packages/vlibras_flutter/assets/unity_loader.js');
+    if (_disposed) return;
 
     final String targetPath;
     final String baseUrl;
@@ -108,6 +145,10 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
 
     if (_useLocalAssets) {
       _assetServer = await _bindAssetServer();
+      if (_disposed) {
+        await _assetServer?.close(force: true);
+        return;
+      }
       final port = _assetServer!.port;
       _serveAssets(_assetServer!);
       targetPath =
@@ -124,6 +165,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     // Clear stale CORS preflight entries that the WebView may have cached from
     // previous sessions with a different port.
     await _controller.clearCache();
+    if (_disposed) return;
 
     await _controller.loadHtmlString(
       _buildHtml(vlibrasJs, unityLoaderJs, targetPath, _translateUrl, proxyBase),
@@ -333,6 +375,7 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
 ''';
 
   void _onBridge(JavaScriptMessage msg) {
+    if (_disposed || _renderGone) return;
     final message = msg.message;
     if (message.startsWith('debug:') ||
         message.startsWith('js_error:') ||
@@ -342,7 +385,6 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     }
     switch (message) {
       case 'load':
-        _loaded = true;
         if (_initCompleter != null && !_initCompleter!.isCompleted) {
           _initCompleter!.complete();
         }
@@ -359,14 +401,17 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     }
   }
 
+  /// Começa a carregar o player (só na primeira chamada) e conclui quando o
+  /// Unity avisar que carregou.
   @override
   Future<void> initialize() {
-    if (_initCompleter != null) return _initCompleter!.future;
-    _initCompleter = Completer<void>();
-    if (_loaded && !_initCompleter!.isCompleted) {
-      _initCompleter!.complete();
-    }
-    return _initCompleter!.future;
+    final existing = _initCompleter;
+    if (existing != null) return existing.future;
+    final completer = _initCompleter = Completer<void>();
+    _initialize().catchError((Object error, StackTrace stack) {
+      if (!completer.isCompleted) completer.completeError(error, stack);
+    });
+    return completer.future;
   }
 
   @override
@@ -380,40 +425,47 @@ class VLibrasMobilePlatform implements VLibrasPlatform {
     final encoded = jsonEncode(text)
         .replaceAll(' ', '\\u2028')
         .replaceAll(' ', '\\u2029');
-    await _controller.runJavaScript('vlibrasTranslate($encoded)');
+    await _run('vlibrasTranslate($encoded)');
   }
 
   @override
-  Future<void> pause() =>
-      _controller.runJavaScript('if(player)player.pause()');
+  Future<void> pause() => _run('if(player)player.pause()');
 
   @override
-  Future<void> stop() =>
-      _controller.runJavaScript('if(player)player.stop()');
+  Future<void> stop() => _run('if(player)player.stop()');
 
   @override
-  Future<void> resume() =>
-      _controller.runJavaScript('if(player)player.continue()');
+  Future<void> resume() => _run('if(player)player.continue()');
 
   @override
-  Future<void> repeat() =>
-      _controller.runJavaScript('if(player)player.repeat()');
+  Future<void> repeat() => _run('if(player)player.repeat()');
 
   @override
   Future<void> setSpeed(double speed) =>
-      _controller.runJavaScript('if(player)player.setSpeed($speed)');
+      _run('if(player)player.setSpeed($speed)');
 
   @override
   Future<void> setAvatar(VLibrasAvatar avatar) =>
-      _controller.runJavaScript('vlibrasChangeAvatar("${avatar.id}")');
+      _run('vlibrasChangeAvatar("${avatar.id}")');
 
   @override
-  Future<void> setSubtitles(bool enabled) =>
-      _controller.runJavaScript('vlibrasToggleSubtitle()');
+  Future<void> setSubtitles(bool enabled) => _run('vlibrasToggleSubtitle()');
 
   @override
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    final guardId = _guardId;
+    if (guardId != null) RenderProcessGuard.unwatch(guardId);
     _assetServer?.close(force: true);
+    final webView = _webView;
+    if (webView != null && !_renderGone) {
+      // Descarrega a página na hora: o WebView nativo só é destruído quando o
+      // Dart coleta o controller, e até lá o Unity seguiria ocupando memória.
+      webView
+          .loadRequest(Uri.parse('about:blank'))
+          .catchError((Object _) {});
+    }
     if (_initCompleter != null && !_initCompleter!.isCompleted) {
       _initCompleter!.completeError(Exception('disposed'));
     }

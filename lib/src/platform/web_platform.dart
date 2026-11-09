@@ -14,7 +14,7 @@ VLibrasPlatform createDefaultPlatform(
 ]) {
   return VLibrasWebPlatform(
     onStatus: onStatus,
-    playerFactory: () => _WebPlayerAdapter.create(targetPath),
+    playerFactory: () => _WebPlayerAdapter.create(targetPath, translateUrl),
   );
 }
 
@@ -34,8 +34,11 @@ class _WebPlayerAdapter implements VLibrasPlayerAdapter {
   // the exact same JS reference that was registered.
   final Map<String, JSFunction> _jsCallbacks = {};
 
-  static VLibrasPlayerAdapter create(String targetPath) =>
-      _WebPlayerAdapter._(createVLibrasPlayer(targetPath));
+  static VLibrasPlayerAdapter create(
+    String targetPath, [
+    String? translateUrl,
+  ]) =>
+      _WebPlayerAdapter._(createVLibrasPlayer(targetPath, translateUrl));
 
   @override
   void load(Object? element) {

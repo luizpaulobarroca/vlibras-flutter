@@ -154,6 +154,16 @@ class HomePage extends StatelessWidget {
 
 > `VLibrasAccessibilityWidget` precisa estar **dentro** de `MaterialApp` (por isso usamos `builder`), para que `Directionality`, `MediaQuery` e `Theme` estejam disponíveis.
 
+Como o widget funciona:
+
+- O avatar só carrega quando o painel é aberto pela primeira vez. Com o app em segundo plano e o painel fechado, ele é descarregado para liberar memória (veja `preloadAvatar` e `releaseAvatarWhenInBackground`).
+- Com o painel aberto, o primeiro toque num texto o traduz, sem acionar o que está embaixo. Um segundo toque no mesmo lugar aciona o elemento (botão, link, campo). A tela continua rolando normalmente.
+- Sem `Text` sob o dedo, o widget usa o rótulo semântico mais próximo. Para que uma imagem com texto embutido seja traduzida, dê a ela um `semanticLabel`:
+
+```dart
+Image.asset('assets/banner_slider_puzzle.png', semanticLabel: 'Slider Puzzle')
+```
+
 ### Opção B — controller + view (uso avançado)
 
 Quando você quer integrar o avatar em um layout específico e controlar traduções manualmente:
@@ -264,12 +274,19 @@ VLibrasAccessibilityWidget(
   avatarHeight: 320,
   buttonSize: 56,
   showSettingsButton: true,
+  // Tradutor; o padrão é https://traducao2.vlibras.gov.br/translate.
+  translateUrl: 'https://traducao2.vlibras.gov.br/translate',
+  // true: carrega o avatar na montagem, e não só na primeira abertura.
+  preloadAvatar: false,
+  // Descarrega o avatar em segundo plano se o painel estiver fechado.
+  releaseAvatarWhenInBackground: true,
   settingsLabels: const VLibrasSettingsLabels(
     title: 'Configurações',
     speed: 'Velocidade',
     avatar: 'Avatar',
     subtitles: 'Legendas',
     close: 'Fechar',
+    retry: 'Tentar novamente',
   ),
   child: child!,
 )

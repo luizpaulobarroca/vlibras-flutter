@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'vlibras_controller.dart';
+import 'vlibras_settings.dart';
 import 'vlibras_settings_labels.dart';
 import 'vlibras_settings_panel.dart';
 import 'vlibras_view.dart';
@@ -29,6 +30,15 @@ const double _kDockVerticalMargin = 8.0;
 // jumpy. 1.0 would track the fingers 1:1.
 const double _kPinchSensitivity = 0.6;
 
+// Quantas vezes seguidas o avatar é recriado sozinho depois de um erro (ex.:
+// o Android encerrou o renderer do WebView). Passou disso, o painel mostra o
+// erro com o botão de tentar de novo, para não entrar em laço.
+const int _kMaxAutoRecoveries = 1;
+
+// Raio (px lógicos) em que um segundo toque, perto do anterior, ativa o
+// elemento em vez de traduzir de novo.
+const double _kSecondTapRadius = 44;
+
 enum _VLibrasDockSide { left, right }
 
 // ── VLibras sign-language figure SVG (path only, no background) ──────────────
@@ -37,6 +47,19 @@ const String _kVLibrasIconSvg = '''
 <path fill-rule="evenodd" clip-rule="evenodd" d="M14.3515 8.00885C14.2659 8.02229 14.0952 8.12725 13.9722 8.24213C13.7501 8.44966 13.7489 8.4543 13.7954 8.95863C13.8212 9.23785 13.873 9.84616 13.9104 10.3105C14.2022 13.9301 14.2501 15.014 14.1218 15.0933C13.906 15.2267 13.787 15.0254 11.7744 11.1229C11.0845 9.7851 10.953 9.64412 10.5264 9.78488C9.84976 10.0082 9.90301 10.3457 10.984 12.685C11.1227 12.9851 11.2361 13.2431 11.2361 13.2584C11.2361 13.2738 11.3578 13.5507 11.5068 13.8737C12.3139 15.6253 12.5242 16.3377 12.2637 16.4377C12.0791 16.5085 11.7503 16.3324 11.48 16.0181C11.3425 15.8582 11.1733 15.664 11.1041 15.5866C11.0348 15.5093 10.8383 15.2718 10.6674 15.059C10.4965 14.8462 10.3404 14.6563 10.3205 14.6369C10.3006 14.6176 9.97505 14.2328 9.59714 13.7818C9.21915 13.3308 8.86093 12.943 8.80099 12.92C8.45635 12.7878 8 13.0487 8 13.3779C8 13.6653 8.6909 14.8215 10.129 16.9405C11.0303 18.2684 11.2421 18.7465 11.4461 19.9131C11.8781 22.3846 12.466 23.8997 13.2266 24.5023C13.7444 24.9126 13.759 24.9156 14.9781 24.8635L16.0946 24.8158L16.943 23.6835C17.4096 23.0607 17.828 22.5037 17.8729 22.4456C18.1983 22.0239 19.0448 20.5299 19.0448 20.3774C19.0448 20.3556 18.6049 20.3579 18.0673 20.3823C17.4053 20.4125 16.9455 20.3987 16.6427 20.3399C16.1178 20.2377 15.4567 19.9369 15.094 19.6351C14.5216 19.1588 14.3534 18.3134 14.7102 17.7047C14.9767 17.2499 15.3462 17.0548 16.1229 16.9585C16.7506 16.8808 17.4221 16.6978 18.3941 16.3399L18.9041 16.1521V15.3306C18.9041 14.489 19.0647 11.5539 19.1866 10.1698C19.2823 9.08146 19.2839 9.09328 19.0167 8.8261C18.8321 8.64157 18.7189 8.58691 18.5211 8.58691C18.0228 8.58691 17.9956 8.65571 17.5021 11.1555C17.2578 12.3932 17.0138 13.6591 16.9598 13.9686C16.842 14.6442 16.7495 14.8932 16.5939 14.9529C16.3906 15.031 16.2003 14.7126 16.1089 14.1418C16.0627 13.8531 15.9423 13.0945 15.8413 12.4561C15.6543 11.2736 15.2804 9.05832 15.2005 8.6586C15.1525 8.41877 14.8376 8.05999 14.6342 8.01349C14.5644 7.99752 14.4372 7.99541 14.3515 8.00885ZM23.723 15.2495C23.41 15.3238 22.5004 15.6532 22.0856 15.8425C21.8429 15.9533 21.6258 16.0439 21.6033 16.0439C21.5808 16.0439 20.988 16.3278 20.286 16.6749C18.8037 17.4076 17.0871 18.0136 16.4932 18.0138C16.0849 18.0139 15.6455 18.1946 15.6116 18.3762C15.5739 18.5794 16.0014 18.9814 16.4285 19.1441C16.8072 19.2883 16.9061 19.2943 18.2628 19.2542C19.4753 19.2186 19.7325 19.2289 19.9271 19.3213C20.2619 19.4801 20.3539 19.7508 20.243 20.2514C20.13 20.7618 19.5007 22.024 18.9935 22.7575C18.6639 23.2342 16.7021 25.845 15.5625 27.3235C15.1558 27.8512 15.1376 28.12 15.4851 28.4676C15.9352 28.9176 15.8771 28.9577 18.2957 26.5266C20.5532 24.2577 20.7416 24.1089 20.8437 24.5159C20.9058 24.7631 20.92 24.727 19.9164 26.8681C19.7465 27.2303 19.6076 27.5367 19.6076 27.5488C19.6076 27.561 19.493 27.8185 19.353 28.1212C18.2031 30.607 18.1562 30.774 18.489 31.197C18.608 31.3484 18.6899 31.3796 18.962 31.3778C19.1429 31.3766 19.3398 31.337 19.3994 31.2898C19.459 31.2427 19.8045 30.666 20.1673 30.0082C20.8028 28.8558 21.1759 28.1882 21.492 27.6375C22.6596 25.6031 22.6539 25.6114 22.8653 25.6114C23.0004 25.6114 23.0041 25.6442 22.9623 26.4732C22.9242 27.2301 22.8281 28.1321 22.5632 30.2193C22.4631 31.0073 22.4759 31.6696 22.5942 31.8257C22.7334 32.0094 23.2169 32.0613 23.4383 31.9163C23.6656 31.7673 23.7716 31.3909 24.035 29.7972C24.593 26.419 24.7329 25.7764 24.9539 25.5765C25.0901 25.4532 25.0998 25.4533 25.2421 25.5821C25.323 25.6554 25.4182 25.7695 25.4536 25.8357C25.4891 25.9018 25.5956 26.6936 25.6905 27.5952C25.9573 30.1327 25.9803 30.2641 26.1891 30.4479C26.4199 30.6511 26.6555 30.6487 26.897 30.4411C27.0809 30.2829 27.0915 30.2366 27.1524 29.3331C27.1873 28.8145 27.2018 27.7887 27.1845 27.0535C27.1509 25.6219 27.2168 24.4232 27.3521 24.0053C27.3981 23.8633 27.6176 23.3198 27.84 22.7974C28.0624 22.2751 28.3782 21.4362 28.5417 20.9332C29.0456 19.3828 29.0076 18.138 28.4388 17.5662C28.318 17.4448 27.9543 17.2033 27.6306 17.0296C27.2171 16.8078 26.828 16.5127 26.3226 16.0375C25.7453 15.4948 25.5399 15.3452 25.2827 15.2804C24.9702 15.2018 24.0047 15.1826 23.723 15.2495ZM29.2115 17.3062C29.1841 17.3926 29.2353 17.6285 29.3384 17.8907C29.5664 18.4703 29.6183 18.9806 29.5192 19.6669C29.3915 20.5513 29.3968 20.6483 29.5752 20.6737C29.8161 20.708 29.9389 20.4344 30.0285 19.663C30.1261 18.8228 30.0404 18.1825 29.7513 17.5916C29.5434 17.1667 29.2971 17.0365 29.2115 17.3062ZM30.4891 17.549C30.4684 17.6029 30.5153 17.8483 30.5933 18.0942C30.7771 18.6736 30.7418 19.5889 30.5087 20.2863C30.3628 20.7228 30.3585 20.7749 30.4599 20.8763C30.7 21.1165 30.946 20.7848 31.1134 19.995C31.2908 19.1582 31.216 18.1188 30.9415 17.6059C30.8481 17.4314 30.5487 17.3937 30.4891 17.549ZM11.0411 23.5833C10.8962 23.7282 10.9436 23.9348 11.2481 24.4858C11.7649 25.421 13.0134 26.4918 13.3049 26.25C13.5114 26.0786 13.4297 25.9206 12.9961 25.653C12.4543 25.3186 11.9773 24.7755 11.6197 24.0858C11.3346 23.536 11.2029 23.4216 11.0411 23.5833ZM10.041 24.0274C9.92968 24.1616 10.0187 24.4934 10.3433 25.1541C10.7889 26.0611 11.7528 26.9914 12.1062 26.8557C12.2933 26.784 12.2451 26.5002 12.0237 26.3694C11.4365 26.0225 10.866 25.2432 10.5674 24.3803C10.4121 23.9312 10.225 23.8057 10.041 24.0274Z" fill="#FDFDFD"/>
 </svg>
 ''';
+
+// ── Content tap recognizer ────────────────────────────────────────────────────
+// Reconhecedor de toque do interceptor. Quando [shouldHandle] devolve false,
+// ele recusa o ponteiro e o toque segue só para o app.
+class _ContentTapRecognizer extends TapGestureRecognizer {
+  _ContentTapRecognizer({super.debugOwner});
+
+  bool Function(PointerDownEvent event)? shouldHandle;
+
+  @override
+  bool isPointerAllowed(PointerDownEvent event) =>
+      (shouldHandle?.call(event) ?? true) && super.isPointerAllowed(event);
+}
 
 // ── Sidebar avatar circle (shows initial letter) ──────────────────────────────
 class _AvatarCircleButton extends StatelessWidget {
@@ -116,6 +139,9 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
     this.buttonIconGradient,
     this.minAvatarScale = 0.7,
     this.maxAvatarScale = 2.5,
+    this.preloadAvatar = false,
+    this.releaseAvatarWhenInBackground = true,
+    this.controllerFactory,
   }) : assert(
          minAvatarScale > 0 && minAvatarScale <= maxAvatarScale,
          'minAvatarScale must be > 0 and <= maxAvatarScale',
@@ -167,7 +193,7 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
   final VLibrasSettingsLabels settingsLabels;
 
   /// Custom translation API endpoint. When null the default VLibras endpoint
-  /// (`https://traducao2.vlibras.gov.br/dl/translate`) is used.
+  /// (`https://traducao2.vlibras.gov.br/translate`) is used.
   final String? translateUrl;
 
   /// Gradient applied to the background of the collapsed floating button.
@@ -184,14 +210,43 @@ class VLibrasAccessibilityWidget extends StatefulWidget {
   /// ```
   final Gradient? buttonIconGradient;
 
+  /// Quando `true`, o avatar começa a carregar assim que o widget é montado,
+  /// como antes da 0.5.0, e o primeiro toque no botão já o encontra pronto.
+  ///
+  /// O padrão (`false`) só carrega o avatar quando o painel é aberto pela
+  /// primeira vez. O player Unity ocupa centenas de MB no processo do WebView,
+  /// e carregá-lo na abertura do app cobra essa memória de todo usuário, mesmo
+  /// de quem nunca usa o VLibras.
+  final bool preloadAvatar;
+
+  /// Quando `true` (padrão), o avatar é descarregado se o app for para segundo
+  /// plano com o painel fechado, e volta a carregar na próxima abertura.
+  ///
+  /// Em segundo plano, o Android escolhe o que encerrar pela memória ocupada, e
+  /// o renderer com o player Unity costuma ser o maior alvo. Velocidade, avatar
+  /// e legendas escolhidos pelo usuário são mantidos.
+  final bool releaseAvatarWhenInBackground;
+
+  /// Cria o controller usado pelo widget. Recebe as preferências a restaurar
+  /// (ou `null` na primeira vez). Exposto para testes.
+  @visibleForTesting
+  final VLibrasController Function(VLibrasSettings? initialSettings)?
+      controllerFactory;
+
   @override
   State<VLibrasAccessibilityWidget> createState() =>
       _VLibrasAccessibilityWidgetState();
 }
 
-class _VLibrasAccessibilityWidgetState
-    extends State<VLibrasAccessibilityWidget> {
-  late final VLibrasController _controller;
+class _VLibrasAccessibilityWidgetState extends State<VLibrasAccessibilityWidget>
+    with WidgetsBindingObserver {
+  // Criado na primeira abertura do painel (ou já no initState com
+  // preloadAvatar) e descartado ao liberar o avatar.
+  VLibrasController? _controller;
+  // Preferências do último controller descartado, para o próximo herdar.
+  VLibrasSettings? _savedSettings;
+  VLibrasStatus? _lastStatus;
+  int _autoRecoveries = 0;
   bool _isExpanded = false;
   bool _isSettingsOpen = false;
   bool _isAvatarPickerOpen = false;
@@ -210,8 +265,13 @@ class _VLibrasAccessibilityWidgetState
   Offset? _gestureAnchor; // Docked-edge corner that stays pinned while resizing.
 
   // ── Double-tap confirmation state ─────────────────────────────────────────
+  // Onde foi o último toque que traduziu: um segundo toque perto dele ativa o
+  // elemento.
   Offset? _pendingTapGlobal;
-  bool _passingThrough = false;
+  // Ponteiro do segundo toque, que o interceptor deixou passar para o app.
+  int? _passThroughPointer;
+  // Posição inicial dos ponteiros em andamento sobre o conteúdo.
+  final Map<int, Offset> _contentPointers = {};
 
   // Key on widget.child so hit tests bypass the opaque interceptor sibling.
   final _childKey = GlobalKey();
@@ -226,10 +286,12 @@ class _VLibrasAccessibilityWidgetState
   @override
   void initState() {
     super.initState();
-    _controller = VLibrasController(translateUrl: widget.translateUrl);
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _controller.initialize(),
-    );
+    WidgetsBinding.instance.addObserver(this);
+    if (widget.preloadAvatar) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _ensureController().initialize();
+      });
+    }
   }
 
   @override
@@ -248,8 +310,93 @@ class _VLibrasAccessibilityWidgetState
 
   @override
   void dispose() {
-    _controller.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _releaseController();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+        if (!_isExpanded && widget.releaseAvatarWhenInBackground) {
+          _releaseController();
+        }
+      case AppLifecycleState.resumed:
+        if (widget.preloadAvatar && widget.visible && _controller == null) {
+          _ensureController().initialize();
+        }
+      default:
+        break;
+    }
+  }
+
+  // ── Controller lifecycle ──────────────────────────────────────────────────
+  VLibrasController _ensureController() {
+    final existing = _controller;
+    if (existing != null) return existing;
+
+    final settings = _savedSettings;
+    final controller = widget.controllerFactory?.call(settings) ??
+        VLibrasController(
+          translateUrl: widget.translateUrl,
+          initialSettings: settings,
+        );
+    controller.addListener(_onControllerChanged);
+    _lastStatus = controller.value.status;
+    return _controller = controller;
+  }
+
+  // Descarta o controller (e com ele o WebView), guardando as preferências.
+  void _releaseController() {
+    final controller = _controller;
+    if (controller == null) return;
+    final value = controller.value;
+    _savedSettings = VLibrasSettings(
+      speed: value.speed,
+      avatar: value.avatar,
+      subtitlesEnabled: value.subtitlesEnabled,
+    );
+    controller.removeListener(_onControllerChanged);
+    _controller = null;
+    _lastStatus = null;
+    controller.dispose();
+  }
+
+  // Troca o controller por um novo e, com o painel aberto, já o carrega.
+  void _recreateController() {
+    setState(_releaseController);
+    if (_isExpanded) _ensureController().initialize();
+  }
+
+  void _onControllerChanged() {
+    final controller = _controller;
+    if (controller == null) return;
+    final status = controller.value.status;
+    if (status == VLibrasStatus.ready) _autoRecoveries = 0;
+
+    final enteredError =
+        status == VLibrasStatus.error && _lastStatus != VLibrasStatus.error;
+    _lastStatus = status;
+    if (!enteredError || _autoRecoveries >= _kMaxAutoRecoveries) return;
+
+    // O WebView pode ter perdido o renderer (o Android o encerra quando falta
+    // memória). Recria uma vez sozinho, fora da notificação em andamento.
+    _autoRecoveries++;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && identical(_controller, controller)) _recreateController();
+    });
+  }
+
+  void _expand() {
+    final current = _controller;
+    if (current != null && current.value.status == VLibrasStatus.error) {
+      _autoRecoveries = 0;
+      _releaseController();
+    }
+    final controller = _ensureController();
+    setState(() => _isExpanded = true);
+    controller.initialize();
   }
 
   // ── Pending-tap helpers ───────────────────────────────────────────────────
@@ -258,26 +405,78 @@ class _VLibrasAccessibilityWidgetState
     setState(() => _pendingTapGlobal = null);
   }
 
-  // Temporarily disables interception so a synthetic tap reaches child widgets.
-  void _passThroughTap(Offset globalPosition) {
-    setState(() => _passingThrough = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      GestureBinding.instance.handlePointerEvent(
-        PointerDownEvent(position: globalPosition, pointer: 99),
-      );
-      GestureBinding.instance.handlePointerEvent(
-        PointerUpEvent(position: globalPosition, pointer: 99),
-      );
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) setState(() => _passingThrough = false);
-      });
-    });
+  // ── Content pointer tracking ──────────────────────────────────────────────
+  // Decide, no toque, se o interceptor fica com ele (traduzir) ou se o deixa
+  // só para o app (segundo toque perto do anterior: ativar o elemento).
+  bool _shouldHandleContentTap(PointerDownEvent event) {
+    final armed = _pendingTapGlobal;
+    if (armed != null &&
+        (event.position - armed).distance < _kSecondTapRadius) {
+      _passThroughPointer = event.pointer;
+      return false;
+    }
+    return true;
   }
 
+  void _onContentPointerDown(PointerDownEvent event) {
+    _contentPointers[event.pointer] = event.position;
+  }
+
+  void _onContentPointerMove(PointerMoveEvent event) {
+    final start = _contentPointers[event.pointer];
+    if (start == null || _pendingTapGlobal == null) return;
+    if ((event.position - start).distance > kTouchSlop) {
+      // Arrastou (rolou a tela): o conteúdo mudou de lugar, então o toque
+      // armado já não aponta para o mesmo elemento.
+      _dismissLinkTooltip();
+    }
+  }
+
+  void _onContentPointerEnd(PointerEvent event) {
+    _contentPointers.remove(event.pointer);
+    if (_passThroughPointer == event.pointer) {
+      // O segundo toque já foi entregue ao app; o próximo volta a traduzir.
+      _passThroughPointer = null;
+      _dismissLinkTooltip();
+    }
+  }
+
+  // Texto a sinalizar sob o dedo: o de um Text (RenderParagraph) ou, se não
+  // houver, o rótulo semântico mais próximo (Image.semanticLabel,
+  // Icon.semanticLabel, Semantics(label:), tooltip). O rótulo cobre imagens
+  // com texto embutido e ícones.
+  static String? _textAt(BoxHitTestResult result) {
+    String? semanticText;
+    for (final entry in result.path) {
+      final target = entry.target;
+      if (target is RenderParagraph) {
+        final text =
+            target.text.toPlainText(includeSemanticsLabels: false).trim();
+        if (text.isNotEmpty && !_isIconGlyph(text)) return text;
+      } else if (semanticText == null && target is RenderSemanticsAnnotations) {
+        final properties = target.properties;
+        final label = (properties.label ??
+                properties.attributedLabel?.string ??
+                properties.tooltip)
+            ?.trim();
+        if (label != null && label.isNotEmpty) semanticText = label;
+      }
+    }
+    return semanticText;
+  }
+
+  // O widget Icon desenha o ícone como um caractere da fonte de ícones, na
+  // área de uso privado do Unicode. Esse "texto" não é para traduzir.
+  static bool _isIconGlyph(String text) => text.runes.every(
+        (rune) =>
+            (rune >= 0xE000 && rune <= 0xF8FF) ||
+            (rune >= 0xF0000 && rune <= 0xFFFFD) ||
+            (rune >= 0x100000 && rune <= 0x10FFFD),
+      );
+
   // ── Tap handler: first tap translates + arms; second tap nearby passes ──
+  // O segundo toque nem chega aqui: _shouldHandleContentTap o deixa para o app.
   void _onContentTap(TapUpDetails details) {
-    if (_passingThrough) return;
     if (!_isExpanded) return;
 
     // Use the Stack's render object only to compute the panel bounds.
@@ -291,35 +490,14 @@ class _VLibrasAccessibilityWidgetState
     final panelRect = _rectFor(size, padding, panelSize);
     if (panelRect.contains(details.localPosition)) return;
 
-    // Second tap near the same position → activate the element.
-    if (_pendingTapGlobal != null) {
-      final dist = (details.globalPosition - _pendingTapGlobal!).distance;
-      if (dist < 44) {
-        _dismissLinkTooltip();
-        _passThroughTap(details.globalPosition);
-        return;
-      }
-    }
-
     // New tap → translate the text under the finger.
-    // Hit-test widget.child directly (bypasses the opaque interceptor sibling).
+    // Hit-test widget.child directly, so only the app content is considered.
     final childRo = _childKey.currentContext?.findRenderObject();
     if (childRo is RenderBox) {
       final result = BoxHitTestResult();
       childRo.hitTest(result, position: details.localPosition);
-
-      // Translate any paragraph text under the tap.
-      for (final entry in result.path) {
-        final target = entry.target;
-        if (target is RenderParagraph) {
-          final text = target.text
-              .toPlainText(includeSemanticsLabels: false)
-              .trim();
-          if (text.isEmpty) continue;
-          _controller.translate(text);
-          break;
-        }
-      }
+      final text = _textAt(result);
+      if (text != null) _controller?.translate(text);
     }
 
     // Arm the second tap for any element, not just ones we can recognise by
@@ -567,7 +745,7 @@ class _VLibrasAccessibilityWidgetState
               bottomLeft: Radius.circular(8),
             ),
             child: InkWell(
-              onTap: () => setState(() => _isExpanded = true),
+              onTap: _expand,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 bottomLeft: Radius.circular(8),
@@ -662,7 +840,7 @@ class _VLibrasAccessibilityWidgetState
       width: rect.width,
       height: rect.height,
       child: GestureDetector(
-        onTap: () => setState(() => _isExpanded = true),
+        onTap: _expand,
         onPanStart: (_) => _startDrag(viewport, padding, buttonExtent),
         onPanUpdate: (details) =>
             _updateDrag(details, viewport, padding, buttonExtent),
@@ -836,6 +1014,10 @@ class _VLibrasAccessibilityWidgetState
         // ── 3. Sidebar: above the gesture layer ─────────────────────────
         Positioned(left: 0, top: 0, bottom: 0, child: _buildSidebar(value)),
 
+        // ── 3b. Error overlay: above the gesture layer, so "retry" works ──
+        if (value.status == VLibrasStatus.error)
+          Positioned.fill(child: _buildErrorOverlay(value)),
+
         // ── 4. Settings overlay: above everything, including sidebar ────
         if (_isSettingsOpen) Positioned.fill(child: _buildSettingsOverlay()),
       ],
@@ -872,7 +1054,7 @@ class _VLibrasAccessibilityWidgetState
       child: Material(
         color: widget.primaryColor,
         child: VLibrasSettingsPanel(
-          controller: _controller,
+          controller: _controller!,
           labels: widget.settingsLabels,
           onClose: () => setState(() => _isSettingsOpen = false),
         ),
@@ -923,7 +1105,7 @@ class _VLibrasAccessibilityWidgetState
                     isSelected: false,
                     primaryColor: widget.primaryColor,
                     onTap: () {
-                      _controller.setAvatar(others[0]);
+                      _controller?.setAvatar(others[0]);
                       setState(() => _isAvatarPickerOpen = false);
                     },
                   ),
@@ -933,7 +1115,7 @@ class _VLibrasAccessibilityWidgetState
                     isSelected: false,
                     primaryColor: widget.primaryColor,
                     onTap: () {
-                      _controller.setAvatar(others[1]);
+                      _controller?.setAvatar(others[1]);
                       setState(() => _isAvatarPickerOpen = false);
                     },
                   ),
@@ -953,7 +1135,12 @@ class _VLibrasAccessibilityWidgetState
       children: [
         ColoredBox(
           color: _kAvatarBg,
-          child: VLibrasView(controller: _controller),
+          // A chave força um WebView novo quando o controller é recriado: o
+          // anterior pode ter perdido o renderer e não serve mais.
+          child: VLibrasView(
+            key: ObjectKey(_controller),
+            controller: _controller!,
+          ),
         ),
 
         if (isLoading)
@@ -973,22 +1160,38 @@ class _VLibrasAccessibilityWidgetState
               ),
             ),
           ),
-
-        if (value.status == VLibrasStatus.error)
-          ColoredBox(
-            color: Colors.black87,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  value.error ?? 'Erro ao carregar',
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
       ],
+    );
+  }
+
+  // Fica acima da camada de arrastar/pinçar (ver _buildMiddleArea) para o
+  // botão de tentar de novo receber o toque.
+  Widget _buildErrorOverlay(VLibrasValue value) {
+    return ColoredBox(
+      color: Colors.black87,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value.error ?? 'Erro ao carregar',
+                style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                // Uma tentativa manual; o contador de recuperação automática
+                // só zera quando o avatar chega a carregar.
+                onPressed: _recreateController,
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                child: Text(widget.settingsLabels.retry),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1033,7 +1236,7 @@ class _VLibrasAccessibilityWidgetState
                 max: 2,
                 divisions: 2,
                 label: _speedLabel(value.speed),
-                onChanged: (v) => _controller.setSpeed(_sliderToSpeed(v)),
+                onChanged: (v) => _controller?.setSpeed(_sliderToSpeed(v)),
               ),
             ),
           ),
@@ -1062,26 +1265,47 @@ class _VLibrasAccessibilityWidgetState
         //    bypassing the opaque interceptor sibling above it.
         KeyedSubtree(key: _childKey, child: widget.child),
 
-        // ② Tap interceptor — full-screen opaque sibling placed ABOVE
-        //    widget.child but BELOW the VLibras panel. Stack hit-tests from
-        //    last child to first; the panel (④) wins for its own area first,
-        //    then the interceptor catches everything else. Removed during
-        //    pass-through so the synthetic tap reaches widget.child's buttons.
-        if (_isExpanded && !_passingThrough)
+        // ② Tap interceptor — full-screen sibling placed ABOVE widget.child
+        //    but BELOW the VLibras panel (④), which wins for its own area.
+        //    It is translucent: pointers also reach widget.child. On a tap,
+        //    the recognizer here joins the gesture arena first and wins, so
+        //    the tap translates without activating the app. Drags are won by
+        //    the app once they pass the touch slop, so lists still scroll and
+        //    sliders still slide while the panel is open. A second tap near
+        //    the previous one is declined here and reaches only the app.
+        if (_isExpanded)
           Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: _onContentTap,
+            child: Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: _onContentPointerDown,
+              onPointerMove: _onContentPointerMove,
+              onPointerUp: _onContentPointerEnd,
+              onPointerCancel: _onContentPointerEnd,
+              child: RawGestureDetector(
+                behavior: HitTestBehavior.translucent,
+                excludeFromSemantics: true,
+                gestures: <Type, GestureRecognizerFactory>{
+                  _ContentTapRecognizer: GestureRecognizerFactoryWithHandlers<
+                      _ContentTapRecognizer>(
+                    () => _ContentTapRecognizer(debugOwner: this),
+                    (recognizer) => recognizer
+                      ..shouldHandle = _shouldHandleContentTap
+                      ..onTapUp = _onContentTap,
+                  ),
+                },
+              ),
             ),
           ),
 
         // ④ VLibras panel / button — topmost, handles its own taps first.
-        ValueListenableBuilder<VLibrasValue>(
-          valueListenable: _controller,
-          builder: (context, value, __) => _isExpanded
-              ? _buildDraggableAvatarPanel(context, value)
-              : _buildDraggableFloatingButton(),
-        ),
+        if (_isExpanded && _controller != null)
+          ValueListenableBuilder<VLibrasValue>(
+            valueListenable: _controller!,
+            builder: (context, value, __) =>
+                _buildDraggableAvatarPanel(context, value),
+          )
+        else
+          _buildDraggableFloatingButton(),
       ],
     );
   }

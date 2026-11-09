@@ -30,7 +30,16 @@ extension type VLibrasPlayerInstance._(JSObject _) implements JSObject {
   external void off(String event, JSFunction callback);
 }
 
-VLibrasPlayerInstance createVLibrasPlayer(String targetPath) {
-  final options = VLibrasPlayerOptions(targetPath: targetPath);
+VLibrasPlayerInstance createVLibrasPlayer(
+  String targetPath, [
+  String? translateUrl,
+]) {
+  // Sem `translateUrl`, o vlibras.js usa o tradutor padrão dele.
+  final options = translateUrl == null
+      ? VLibrasPlayerOptions(targetPath: targetPath)
+      : VLibrasPlayerOptions(
+          targetPath: targetPath,
+          translator: translateUrl,
+        );
   return vLibras.player.callAsConstructor(options) as VLibrasPlayerInstance;
 }

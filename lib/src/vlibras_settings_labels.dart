@@ -18,6 +18,7 @@ class VLibrasSettingsLabels {
     this.avatarGuga = 'Guga',
     this.subtitles = 'Legendas',
     this.close = 'Fechar',
+    this.retry = 'Tentar novamente',
   });
 
   final String title;
@@ -31,4 +32,7 @@ class VLibrasSettingsLabels {
   final String avatarGuga;
   final String subtitles;
   final String close;
+
+  /// Botão exibido quando o avatar não carrega.
+  final String retry;
 }
